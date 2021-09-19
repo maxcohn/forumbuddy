@@ -1,0 +1,17 @@
+GET /
+	Home page
+
+GET /post?id={id}
+	Post page
+
+POST /post
+	Create post
+
+DELETE /post
+	Delete post
+
+GET /comment?id={id}
+
+POST /comment?post={id}
+
+DELETE /comment?id={id}
