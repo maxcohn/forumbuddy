@@ -10,5 +10,6 @@
             "password": "password",
             "name": "Postgres"
         }
-    ]
+    ],
+    "python.pythonPath": "forumbuddy/.venv/bin/python3"
 }

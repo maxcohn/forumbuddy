@@ -1,5 +1,8 @@
+from dataclasses import dataclass
 from . import db
+from .models import Comment, Post, User
 
-x = db.query('SELECT * FROM posts WHERE pid = %s', (1,))[0]
+import dataclasses
+import json
 
-print(x)
+#print(json.dumps(dataclasses.asdict(Post.get_post_and_comments(1)), indent=4, default=str))
