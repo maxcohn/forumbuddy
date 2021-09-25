@@ -1,4 +1,5 @@
 from __future__ import annotations
+import dataclasses
 
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
@@ -24,13 +25,12 @@ def as_object(func):
     return classmethod(wrapper)
 
 
-
 @dataclass
 class User:
     uid: int = 0
     username: str = ''
-    password_hash: str = ''
-    created_at: datetime = datetime(1970, 1, 1, 0, 0, 0)
+    password_hash: str = None
+    created_at: datetime = None #datetime(1970, 1, 1, 0, 0, 0)
     
     @as_object
     def get_by_id(id: int):
@@ -43,8 +43,6 @@ class User:
         return res
 
     
-
-#TODO: construct tree from comments
 @dataclass
 class Comment:
     cid: int = 0
@@ -55,6 +53,7 @@ class Comment:
     created_at: datetime = datetime(1970, 1, 1, 0, 0, 0)
 
     children: List[Comment] = field(default_factory=list)
+    user: User = field(default_factory=User)
     
     @as_object
     def get_by_id(id: int):
@@ -85,6 +84,7 @@ class Post:
     created_at: datetime = datetime(1970, 1, 1, 0, 0, 0)
 
     comments: List[Comment] = field(default_factory=Comment)
+    user: User = field(default_factory=User)
     
     @as_object
     def get_by_id(id: int):
@@ -111,11 +111,11 @@ class Post:
 
     @classmethod
     def get_comment_tree(cls, id: int):
-        #TODO: join with users 
         res = db.query('''
-            SELECT *
-            FROM comments
-            WHERE pid = %s
+            SELECT c.cid, c.body, c.parent, c.pid, u.uid, u.username
+            FROM comments AS c, users AS u
+            WHERE c.uid = u.uid
+                AND pid = %s
             ORDER BY
                 CASE WHEN parent IS NULL THEN 0
                 ELSE parent
@@ -124,7 +124,11 @@ class Post:
         comment_map: Dict[int, Comment] = {}
         root = []
         for row in res:
-            cur = Comment(**row)
+            row = dict(row.items())
+            user = User(uid=row['uid'], username=row['username'])
+            #del row['uid']
+            del row['username']
+            cur = Comment(**row, user=user)
             comment_map[cur.cid] = cur
 
             if cur.parent is None:
