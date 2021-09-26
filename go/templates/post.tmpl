@@ -1,0 +1,29 @@
+<html>
+<head>
+
+</head>
+<body>
+    <h1>{{.Title}}</h1>
+    <h3>{{.Body}}</h1>
+
+    {{define "comment"}}
+    <li>
+        {{.Body}}
+        {{if gt (len .Children) 0}}
+            <ul>
+                {{range .Children}}
+                    {{template "comment" .}}
+                {{end}}
+            </ul>
+        {{end}}
+    </li>
+    {{end}}
+
+    <ul>
+        {{range .Comments}}
+            {{template "comment" .}}
+        {{end}}
+    </ul>
+
+</body>
+</html>
