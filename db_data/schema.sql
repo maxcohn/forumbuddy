@@ -1,7 +1,7 @@
 CREATE TABLE users (
 	uid SERIAL PRIMARY KEY,
-	username TEXT,
-	password_hash TEXT, --TODO: look into this
+	username TEXT NOT NULL,
+	password_hash TEXT NOT NULL, --TODO: look into this
 	created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -10,6 +10,7 @@ CREATE TABLE users (
 
 CREATE TABLE posts (
     pid SERIAL NOT NULL PRIMARY KEY,
+	uid INT NOT NULL REFERENCES users(uid),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
 
@@ -21,9 +22,9 @@ CREATE TABLE posts (
 
 CREATE TABLE comments (
 	cid SERIAL PRIMARY KEY,
-	pid INT REFERENCES posts(pid),
-	uid INT REFERENCES users(uid),
-	body TEXT,
+	pid INT NOT NULL REFERENCES posts(pid),
+	uid INT NOT NULL REFERENCES users(uid),
+	body TEXT NOT NULL,
 	parent INT REFERENCES comments(cid),
 
 	created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

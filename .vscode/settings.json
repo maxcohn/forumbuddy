@@ -11,5 +11,5 @@
             "name": "Postgres"
         }
     ],
-    "python.pythonPath": "forumbuddy/.venv/bin/python3"
+    "python.pythonPath": "python/.venv/bin/python3"
 }

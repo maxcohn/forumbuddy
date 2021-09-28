@@ -1,8 +1,4 @@
-INSERT INTO posts
-    (pid, title, body)
-VALUES
-    (1, 'What *is* eating Gilber Grape?', 'We''re honestly not sure, we should probably watch the movie'),
-    (2, 'Green is the color of life', 'What about fully ripe bell peppers?')
+
 
 
 INSERT INTO users
@@ -11,7 +7,13 @@ VALUES
     (1, 'foo-bar', ''),
     (2, 'pg', ''),
     (3, 'ken', ''),
-    (4, 'dmr', '')
+    (4, 'dmr', '');
+
+INSERT INTO posts
+    (pid, uid, title, body)
+VALUES
+    (1, 2, 'What *is* eating Gilber Grape?', 'We''re honestly not sure, we should probably watch the movie'),
+    (2, 3, 'Green is the color of life', 'What about fully ripe bell peppers?');
 
 INSERT INTO comments
     (cid, pid, uid, body, parent)
@@ -22,4 +24,4 @@ VALUES
     (4, 1, 4, 'Eh, mediocre.', NULL),
     (5, 2, 1, 'Is there an acutal difference in taste or nutrition depending on the level of ripeness of a bell pepper?', NULL),
     (6, 2, 2, 'I don''t think so', 5),
-    (7, 2, 4, 'Never liked bell peppers personally.', NULL)
+    (7, 2, 4, 'Never liked bell peppers personally.', NULL);

@@ -2,11 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -43,6 +41,21 @@ type Comment struct {
 	Children []Comment `json:"children"`
 }
 
+func GetUserByUsername(username string) (User, error) {
+	var user User
+	err := Conn.Get(&user, `
+		SELECT uid, username, created_at
+		FROM users
+		WHERE username = $1
+	`, username)
+
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
 func GetUserById(id int) (User, error) {
 	var user User
 	err := Conn.Get(&user, `
@@ -56,6 +69,30 @@ func GetUserById(id int) (User, error) {
 	}
 
 	return user, nil
+}
+
+func GetCommentById(id int) (Comment, error) {
+	var comment Comment
+
+	err := Conn.Get(&comment, `
+		SELECT
+			c.cid,
+			c.pid,
+			c.body,
+			c.parent,
+			c.created_at,
+			u.uid AS "user.uid",
+			u.username AS "user.username"
+		FROM comments AS c, users AS u
+		WHERE c.uid = u.uid
+			AND c.cid = $1
+	`, id)
+
+	if err != nil {
+		return comment, err
+	}
+
+	return comment, nil
 }
 
 func GetPostAndCommentsById(id int) (Post, error) {
@@ -147,28 +184,7 @@ func main() {
 	 * templates
 	 */
 
-	var users []User
-	err := Conn.Select(&users, "SELECT * FROM users")
-
-	if err != nil {
-		panic(err)
-	}
-
-	postTemplate := template.Must(template.New("post").ParseFiles("./templates/post.tmpl"))
-
-	fmt.Println(postTemplate.Name())
-	post, _ := GetPostAndCommentsById(1)
-
-	v, err := json.MarshalIndent(post, "", "    ")
-
-	fmt.Printf("%v\n", string(v))
-	fmt.Printf("%v\n", post)
-
-	err = postTemplate.ExecuteTemplate(os.Stdout, "post.tmpl", post)
-
-	if err != nil {
-		panic(err)
-	}
+	templates := template.Must(template.New("post").ParseGlob("./templates/*.tmpl"))
 
 	router := mux.NewRouter()
 	router.HandleFunc("/post/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
@@ -177,10 +193,48 @@ func main() {
 
 		post, _ := GetPostAndCommentsById(postId)
 
-		postTemplate := template.Must(template.New("post").ParseFiles("./templates/post.tmpl"))
+		templates.ExecuteTemplate(w, "post.tmpl", post)
 
-		postTemplate.ExecuteTemplate(w, "post.tmpl", post)
+	})
 
+	router.HandleFunc("/comment/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+		routeVars := mux.Vars(r)
+		commentId, _ := strconv.Atoi(routeVars["id"])
+
+		comment, err := GetCommentById(commentId)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		templates.ExecuteTemplate(w, "comment.tmpl", comment)
+	})
+
+	router.HandleFunc("/user/{idOrUsername}", func(w http.ResponseWriter, r *http.Request) {
+		routeVars := mux.Vars(r)
+
+		var user User
+
+		if uid, err := strconv.Atoi(routeVars["idOrUsername"]); err != nil {
+			username := routeVars["idOrUsername"]
+
+			user, err = GetUserByUsername(username)
+
+			if err != nil {
+				http.Error(w, "Unable to find user", http.StatusNotFound)
+				return
+			}
+		} else {
+			user, err = GetUserById(uid)
+
+			if err != nil {
+				http.Error(w, "Unable to find user", http.StatusNotFound)
+				return
+			}
+		}
+
+		templates.ExecuteTemplate(w, "user.tmpl", user)
 	})
 
 	srv := &http.Server{
