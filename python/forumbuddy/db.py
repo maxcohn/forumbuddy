@@ -24,7 +24,7 @@ def query(query: str, data: Tuple) -> List[Dict[str, Any]]:
         res = cur.fetchall()
     _conn_pool.putconn(conn)
 
-    return res
+    return [dict(row) for row in res]
 
 def query_one(query: str, data: Tuple) -> Dict[str, Any]:
     '''Query the database via a connection pool and return all results
@@ -42,4 +42,4 @@ def query_one(query: str, data: Tuple) -> Dict[str, Any]:
         res = cur.fetchone()
     _conn_pool.putconn(conn)
 
-    return res
+    return dict(res)
