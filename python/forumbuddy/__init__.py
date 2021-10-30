@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import dataclasses
 import json
 import secrets
+import functools
 
 from flask import Flask, request, render_template, session
 from flask.helpers import url_for
@@ -16,10 +17,8 @@ from .models import Comment, Post, User
 
 """
 #TODO: Make authentication
-    /login - GET, POST
-    set session (use redis)
 
-    is_logged_in function - return 401 otherwise
+    switch session to redis
 
     /register - GET, POST
 
@@ -44,6 +43,14 @@ app.config['SESSION_TYPE'] = 'filesystem' #TODO: change this to redis
 
 Session(app)
 
+def login_required(f):
+    @functools.wraps(f)
+    def inner(*args, **kwargs):
+        if 'uid' not in session:
+            return redirect(url_for('get_login', next=request.url))
+        return f(*args, **kwargs)
+    return inner
+
 @app.route('/', methods=['GET'])
 def index():
     posts = Post.get_recent_posts(15)
@@ -65,7 +72,6 @@ def post_login():
 
     username = request.form['username']
     password = request.form['password']
-
 
     ph = argon2.PasswordHasher()
 
@@ -104,6 +110,7 @@ def create_user():
     return 'asd', 203
 
 @app.route('/post/<int:post_id>', methods=['GET'])
+@login_required
 def post_page(post_id: int):
     #TODO: better error handling
     try:
