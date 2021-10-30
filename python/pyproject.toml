@@ -8,6 +8,8 @@ authors = ["maxcohn <maxc4321@gmail.com>"]
 python = "^3.8"
 flask = "^2.0.1"
 psycopg2-binary = "^2.9.1"
+argon2-cffi = "^21.1.0"
+Flask-Session = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

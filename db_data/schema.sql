@@ -1,7 +1,6 @@
 CREATE TABLE users (
 	uid SERIAL PRIMARY KEY,
 	username TEXT NOT NULL,
-	password_hash TEXT NOT NULL, --TODO: look into this
 	created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -33,6 +32,11 @@ CREATE TABLE comments (
 	-- foreign key for uid, pid, and parent
 );
 
+CREATE TABLE user_hashes (
+	uid INT PRIMARY KEY NOT NULL REFERENCES users(uid),
+	password_hash TEXT NOT NULL --TODO: look into this
+
+);
 
 -- procedure for getting comment tree?
 

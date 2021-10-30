@@ -1,6 +1,6 @@
 from __future__ import annotations
-import dataclasses
 
+import dataclasses
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple, Union
 from dataclasses import dataclass, field, is_dataclass
@@ -58,11 +58,10 @@ class ModelBase:
 class User(ModelBase):
     uid: int = 0
     username: str = ''
-    password_hash: str = field(default=None, metadata={'in_json': False})
     created_at: datetime = datetime(1970, 1, 1, 0, 0, 0)
     
     @classmethod
-    def get_by_id(cls, id: int):
+    def get_by_id(cls, id: int) -> User:
         res = db.query_one('''
             SELECT *
             FROM users
@@ -70,6 +69,37 @@ class User(ModelBase):
             LIMIT 1''', (id,))
 
         return as_object(cls, res)
+
+    @classmethod
+    def get_by_username(cls, username: str) -> User:
+        res = db.query_one('''
+            SELECT *
+            FROM users
+            WHERE username = %s
+            LIMIT 1''', (username,))
+
+        return as_object(cls, res)
+
+    def get_password_hash(username: str) -> str:
+        res = db.query_one('''
+            SELECT password_hash
+            FROM user_hashes AS uh, users AS u
+            WHERE uh.uid = u.uid
+                AND u.username = %s''', (username,))
+
+        if res is None:
+            raise Exception('No record')
+        
+        return res['password_hash']
+
+    def set_password_hash(username: str, hash: str):
+        db.execute('''
+            UPDATE user_hashes AS uh
+            SET user_hash = %s
+            FROM users AS u
+            WHERE uh.uid = u.uid
+                AND u.username = %s
+        ''', (hash, username))
 
     
 @dataclass
@@ -85,7 +115,7 @@ class Comment(ModelBase):
     user: User = field(default_factory=User)
     
     @classmethod
-    def get_by_id(cls, id: int):
+    def get_by_id(cls, id: int) -> Comment:
         res = db.query_one('''
             SELECT *
             FROM comments
@@ -95,12 +125,12 @@ class Comment(ModelBase):
         return as_object(cls, res)
 
     @classmethod
-    def get_all_from_post(cls, id: int):
+    def get_all_from_post(cls, id: int) -> List[Comment]:
         res = db.query('''
             SELECT *
             FROM comments
             WHERE pid = %s
-            ''', (1,))
+            ''', (id,))
 
         return as_object(cls, res)
 
@@ -116,7 +146,7 @@ class Post(ModelBase):
     user: User = field(default_factory=User)
     
     @classmethod
-    def get_by_id(cls, id: int):
+    def get_by_id(cls, id: int) -> Post:
         res = db.query_one('''
             SELECT *
             FROM posts
@@ -126,7 +156,7 @@ class Post(ModelBase):
         return as_object(cls, res)
 
     @classmethod
-    def get_recent_posts(cls, num_posts: int):
+    def get_recent_posts(cls, num_posts: int) -> List[Post]:
         res = db.query('''
             SELECT p.pid, p.title, p.body, p.created_at, u.uid, u.username
             FROM posts AS p, users AS u
@@ -146,7 +176,7 @@ class Post(ModelBase):
         return posts
 
     @classmethod
-    def get_post_and_comments(cls, id: int):
+    def get_post_and_comments(cls, id: int) -> Post:
         res = db.query_one('''
             SELECT p.pid, p.title, p.body, p.created_at, u.username, u.uid
             FROM posts AS p, users AS u
@@ -164,7 +194,7 @@ class Post(ModelBase):
 
 
     @classmethod
-    def get_comment_tree(cls, id: int):
+    def get_comment_tree(cls, id: int) -> List[Comment]:
         res = db.query('''
             SELECT c.cid, c.body, c.parent, c.pid, u.uid, u.username
             FROM comments AS c, users AS u

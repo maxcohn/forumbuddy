@@ -2,12 +2,12 @@
 
 
 INSERT INTO users
-    (uid, username, password_hash)
+    (uid, username)
 VALUES
-    (1, 'foo-bar', ''),
-    (2, 'pg', ''),
-    (3, 'ken', ''),
-    (4, 'dmr', '');
+    (1, 'foo-bar'),
+    (2, 'pg'),
+    (3, 'ken'),
+    (4, 'dmr');
 
 INSERT INTO posts
     (pid, uid, title, body)
