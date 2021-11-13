@@ -16,8 +16,6 @@ from .models import Comment, Post, User
 
 
 """
-#TODO: Make authentication
-
     switch session to redis
 
     /register - GET, POST

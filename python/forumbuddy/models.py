@@ -62,6 +62,7 @@ class User(ModelBase):
     
     @classmethod
     def get_by_id(cls, id: int) -> User:
+        '''Get a user from the database based on their user id'''
         res = db.query_one('''
             SELECT *
             FROM users
@@ -72,6 +73,7 @@ class User(ModelBase):
 
     @classmethod
     def get_by_username(cls, username: str) -> User:
+        '''Get a user from the database based on their username'''
         res = db.query_one('''
             SELECT *
             FROM users
