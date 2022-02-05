@@ -1,0 +1,12 @@
+{{template "base" .}}
+
+{{define "title"}}Home{{end}}
+
+{{define "main"}}
+
+    {{range .Posts}}        
+    <a href="/post/{{.Pid}}">
+        <h3>{{.Title}}</h3>
+    </a>
+    {{end}}
+{{end}}

@@ -1,8 +1,8 @@
-<html>
-<head>
+{{template "base" .}}
 
-</head>
-<body>
+{{define "title"}}Home{{end}}
+
+{{define "main"}}
     <h1>{{.Title}}</h1>
     <h3>{{.Body}}</h1>
 
@@ -25,5 +25,4 @@
         {{end}}
     </ul>
 
-</body>
-</html>
+{{end}}
