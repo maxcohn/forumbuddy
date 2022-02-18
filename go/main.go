@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -26,6 +26,7 @@ import (
 * caching routes (only if not logged in?)
 *	Maybe add caching to models individually for expensive things like post and comments?
 * fix templates using base template
+* Add is_link bool to schema and update models
  */
 func main() {
 
@@ -41,10 +42,10 @@ func main() {
 
 	router := routes.NewRouter(db, templates, sessionStore)
 
-	mainRouter := mux.NewRouter()
-	mainRouter.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
+	mainRouter := chi.NewRouter()
+	mainRouter.Mount("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 
-	mainRouter.PathPrefix("/").Handler(router)
+	mainRouter.Mount("/", router)
 
 	srv := &http.Server{
 		Addr: "127.0.0.1:8080",

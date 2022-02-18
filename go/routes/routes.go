@@ -1,13 +1,14 @@
 package routes
 
 import (
+	"fmt"
 	"forumbuddy/models"
 	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
+	"github.com/gorilla/mux" // TODO: convert to chi like in main.go
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 )
@@ -90,10 +91,12 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 
 	// Page rendering routes
 	router.HandleFunc("/", app.indexHandler).Methods("GET")
-	router.HandleFunc("/newpost", app.newPostPageHandler).Methods("GET")
+	router.HandleFunc("/newpost", app.newPostPageHandler).Methods("GET") //TODO: require loggedin
 	router.HandleFunc("/post/{id:[0-9]+}", app.postPageHandler).Methods("GET")
 	router.HandleFunc("/comment/{id:[0-9]+}", app.commentPageHandler).Methods("GET")
 	router.HandleFunc("/user/{idOrUsername}", app.userPageHandler).Methods("GET")
+
+	router.HandleFunc("/post", app.createPostHandler).Methods("POST") //TODO: require loggedin
 
 	// User related routes
 	router.HandleFunc("/login", app.loginPageHandler).Methods("GET")
@@ -174,13 +177,35 @@ func (app *appState) newPostPageHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
-	//TODO:
+	//TODO: rqeuire login
+	fmt.Println("hit create new post")
+	r.ParseForm()
+	//TODO: validate?
+	title := r.Form["title"][0]
+	text := r.Form["text"][0]
+	uid, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
+
+	if !isLoggedIn {
+		//TODO: 401
+		return
+	}
+
+	newPostId, err := models.CreateNewPost(app.db, uid, title, text)
+
+	if err != nil {
+		http.Error(w, "Failed to create the post", 500)
+		return
+	}
+
+	http.Redirect(w, r, "/post/"+strconv.Itoa(newPostId), 301)
+	//TODO: return 201
 }
 
 func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+//TODO: change name to signupHandler?
 func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 
 }

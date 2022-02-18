@@ -189,3 +189,24 @@ func GetPostAndCommentsById(db *sqlx.DB, id int) (Post, error) {
 
 	return post, nil
 }
+
+//TODO: maybe to convert to a non-model based method
+func CreateNewPost(db *sqlx.DB, uid int, title, body string) (int, error) {
+	// Insert the post into the DB and get that new post's ID
+	var newPostId int
+	err := db.Get(&newPostId, `
+		INSERT INTO posts
+			(uid, title, body)
+		VALUES
+			($1, $2, $3)
+		RETURNING pid
+	`, uid, title, body)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		//TODO: log this?
+		return 0, err
+	}
+
+	return newPostId, nil
+}

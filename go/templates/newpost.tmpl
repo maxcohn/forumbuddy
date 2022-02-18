@@ -2,13 +2,28 @@
 
 
 
-<form>
-  <input type="text" placeholder="Post title" />
-  <input type="text" placeholder="URL" />
+<form method="POST" action="/post">
+  <div>
+    <label for="title">Title: </label>
+    <input type="text" id="title" name="title" placeholder="Post title" />
+  </div>
+  
+  <!-- TODO: no support for URL only at the moment
+    <div>
+      <label for="title">URL: </label>
+      <input type="text" id="url" name="url" placeholder="URL" />
+    </div>
+  -->
 
-  <textarea>
-    
-  </textarea>
+  <div>
+    <label for="text">Title: </label>
+    <textarea id="text" name="text"></textarea>
+  </div>
+
+  <div>
+    <button>Submit</button>
+  </div>
+  
 </form>
 
 
