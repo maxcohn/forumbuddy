@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -22,12 +23,15 @@ import (
 * Post rating
 * Session expiration
 * templates
+* caching routes (only if not logged in?)
+*	Maybe add caching to models individually for expensive things like post and comments?
+* fix templates using base template
  */
 func main() {
 
 	// Setup data being used
 	db := sqlx.MustConnect("postgres", "user=postgres password=password host=127.0.0.1 sslmode=disable")
-	templates := template.Must(template.New("post").ParseGlob("./templates/*.tmpl"))
+	templates := template.Must(template.New("").ParseGlob("./templates/*.tmpl"))
 
 	secretKey := "thisisexactly32charactersmydudes"
 
@@ -37,13 +41,18 @@ func main() {
 
 	router := routes.NewRouter(db, templates, sessionStore)
 
+	mainRouter := mux.NewRouter()
+	mainRouter.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
+
+	mainRouter.PathPrefix("/").Handler(router)
+
 	srv := &http.Server{
 		Addr: "127.0.0.1:8080",
 		// Good practice to set timeouts to avoid Slowloris attacks.
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      router, // Pass our instance of gorilla/mux in.
+		Handler:      mainRouter, // Pass our instance of gorilla/mux in.
 	}
 
 	fmt.Println("Starting server")

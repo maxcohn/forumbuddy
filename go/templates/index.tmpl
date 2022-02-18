@@ -1,12 +1,11 @@
-{{template "base" .}}
+{{template "header"}}
 
-{{define "title"}}Home{{end}}
-
-{{define "main"}}
-
-    {{range .Posts}}        
+<h1>asdasd</h1>
+{{range .Posts}}
     <a href="/post/{{.Pid}}">
         <h3>{{.Title}}</h3>
     </a>
-    {{end}}
 {{end}}
+
+
+{{template "footer"}}

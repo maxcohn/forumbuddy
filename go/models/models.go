@@ -56,11 +56,6 @@ func GetRecentPosts(db *sqlx.DB, limit int) ([]Post, error) {
 		return nil, err
 	}
 
-	//TODO: remopve
-	for _, p := range posts {
-		fmt.Printf("%v\n", p)
-	}
-
 	return posts, nil
 }
 

@@ -1,28 +1,41 @@
-{{template "base" .}}
+{{template "header"}}
 
-{{define "title"}}Home{{end}}
-
-{{define "main"}}
-    <h1>{{.Title}}</h1>
-    <h3>{{.Body}}</h1>
-
-    {{define "comment"}}
-    <li>
+{{define "comment"}}
+<li>
+    <p>
         {{.Body}}
-        {{if gt (len .Children) 0}}
-            <ul>
-                {{range .Children}}
-                    {{template "comment" .}}
-                {{end}}
-            </ul>
-        {{end}}
-    </li>
+        <span class="username-text">
+            <a href="/user/{{.User.Username}}">
+                {{.User.Username}}
+            </a>
+        </span>
+        &nbsp;
+        <span class="username-text">
+            <a href="/comment/{{.Cid}}">
+                reply
+            </a>
+        </span>
+
+    </p>
+    {{if gt (len .Children) 0}}
+        <ul>
+            {{range .Children}}
+                {{template "comment" .}}
+            {{end}}
+        </ul>
     {{end}}
-
-    <ul>
-        {{range .Comments}}
-            {{template "comment" .}}
-        {{end}}
-    </ul>
-
+</li>
 {{end}}
+
+
+<h1>{{.Title}}</h1>
+<p>{{.Body}}</p>
+
+<hr />
+
+<ul>
+    {{range .Comments}}
+        {{template "comment" .}}
+    {{end}}
+</ul>
+{{template "footer"}}

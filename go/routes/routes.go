@@ -24,11 +24,15 @@ func (app *appState) requireLoggedInMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			// If there was an error reading the sessions, we can't confirm they're logged in
 			//TODO: log that we failed to read the session
+			w.WriteHeader(500)
+			w.Write([]byte("There was an error on our side"))
 			return
 		}
 
 		if sess.Values["uid"] == nil {
+			http.Redirect(w, r, "/login", 301)
 			// If they do have a session, but there is no 'uid' value, that means they're not logged in
+			//TODO: maybe redirect to /login?
 			return //TODO: report 401
 		}
 
@@ -73,7 +77,7 @@ func (t *test) postPageHandler(w http.ResponseWriter, r *http.Request) {
 */
 
 //TODO: left off with user login For now, maybe we should ignore argon2id and hashing and just use a map for checking
-
+//TODO: maybe switch from gorilla mux to chi?
 func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.Store) *mux.Router {
 	app := appState{
 		db:           db,
@@ -86,6 +90,7 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 
 	// Page rendering routes
 	router.HandleFunc("/", app.indexHandler).Methods("GET")
+	router.HandleFunc("/newpost", app.newPostPageHandler).Methods("GET")
 	router.HandleFunc("/post/{id:[0-9]+}", app.postPageHandler).Methods("GET")
 	router.HandleFunc("/comment/{id:[0-9]+}", app.commentPageHandler).Methods("GET")
 	router.HandleFunc("/user/{idOrUsername}", app.userPageHandler).Methods("GET")
@@ -162,8 +167,14 @@ func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
 	app.templates.ExecuteTemplate(w, "user.tmpl", user)
 }
 
-func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
+func (app *appState) newPostPageHandler(w http.ResponseWriter, r *http.Request) {
+	//TODO: require login - if not logged in, redirect to /login
 
+	app.templates.ExecuteTemplate(w, "newpost.tmpl", nil)
+}
+
+func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
+	//TODO:
 }
 
 func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request) {
@@ -177,7 +188,7 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
 	sess, err := app.sessionStore.Get(r, "session")
 	if err != nil {
-		//TODO:
+		//TODO: figure out how to handle this case (since it shouldn't happen, I think, maybe just log and 500)
 		return
 	}
 

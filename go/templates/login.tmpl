@@ -1,20 +1,17 @@
-{{template "base" .}}
+{{template "header"}}
 
-{{define "title"}}Home{{end}}
+<form action="/login" method="POST" >
+    <label for="username">
+        Username:
+        <input type="text" id="username" name="username" />
+    </label>
 
-{{define "main"}}
-    <form action="/login" method="POST" >
-        <label for="username">
-            Username:
-            <input type="text" id="username" name="username" />
-        </label>
+    <label for="password">
+        Password:
+        <input type="password" name="password" />
+    </label>
+    
+    <input type="submit" value="Login" />
+</form>
 
-        <label for="password">
-            Password:
-            <input type="password" name="password" />
-        </label>
-        
-        <input type="submit" value="Login" />
-    </form>
-
-{{end}}
+{{template "footer"}}
