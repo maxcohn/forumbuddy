@@ -231,3 +231,5 @@ func CreateNewComment(db *sqlx.DB, uid, pid int, parent sql.NullInt64, body stri
 
 	return newCommentId, nil
 }
+
+//TODO: func CreateNewUser
