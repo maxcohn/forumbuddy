@@ -1,4 +1,4 @@
-
+--TODO: set auto increment for all of these columns
 
 
 INSERT INTO users
@@ -8,6 +8,17 @@ VALUES
     (2, 'pg'),
     (3, 'ken'),
     (4, 'dmr');
+
+/*TODO:
+INSERT INTO user_hashes
+    (uid, password_hash)
+VALUES
+    (1, 'foo-bar'),
+    (2, 'pg'),
+    (3, 'ken'),
+    (4, 'dmr');
+*/
+
 
 INSERT INTO posts
     (pid, uid, title, body)
