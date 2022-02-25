@@ -1,7 +1,27 @@
 {{template "header"}}
 
-<h3>{{.Body}}</h1>
+<h3>{{.Comment.Body}}</h1>
     
 TODO: add text box and reply button as form, if logged in
 TODO: also show all child comments
+
+
+{{if .IsLoggedIn}}
+<form method="POST" action="/comment">
+  
+    <div>
+      <label for="text">Comment: </label>
+      <textarea id="text" name="text"></textarea>
+    </div>
+
+    <input type="hidden" name="cid" value="{{.Comment.Cid}}">
+    <input type="hidden" name="pid" value="{{.Comment.Pid}}">
+  
+    <div>
+      <button>Submit</button>
+    </div>
+    
+</form>
+{{end}}
+
 {{template "footer"}}

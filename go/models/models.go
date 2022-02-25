@@ -32,8 +32,8 @@ type Comment struct {
 	Parent    sql.NullInt64 `db:"parent" json:"-"`
 	CreatedAt time.Time     `db:"created_at" json:"created_at"`
 
-	User     User      `db:"user" json:"user"`
-	Children []Comment `json:"children"`
+	User     User       `db:"user" json:"user"`
+	Children []*Comment `json:"children"`
 }
 
 func GetRecentPosts(db *sqlx.DB, limit int) ([]Post, error) {
@@ -114,6 +114,8 @@ func GetCommentById(db *sqlx.DB, id int) (Comment, error) {
 	return comment, nil
 }
 
+//TODO: get comment and children by id
+
 func GetPostAndCommentsById(db *sqlx.DB, id int) (Post, error) {
 	var post Post
 	var comments []Comment
@@ -169,7 +171,7 @@ func GetPostAndCommentsById(db *sqlx.DB, id int) (Post, error) {
 	for i, comment := range comments {
 		var curComment = &comments[i]
 
-		curComment.Children = make([]Comment, 0)
+		curComment.Children = make([]*Comment, 0)
 		commentMap[comment.Cid] = curComment
 
 		if !comment.Parent.Valid {
@@ -178,7 +180,7 @@ func GetPostAndCommentsById(db *sqlx.DB, id int) (Post, error) {
 		} else {
 			// If there is a parent comment
 			parent := commentMap[int(comment.Parent.Int64)]
-			parent.Children = append(parent.Children, *curComment)
+			parent.Children = append(parent.Children, curComment)
 		}
 	}
 
@@ -190,7 +192,6 @@ func GetPostAndCommentsById(db *sqlx.DB, id int) (Post, error) {
 	return post, nil
 }
 
-//TODO: maybe to convert to a non-model based method
 func CreateNewPost(db *sqlx.DB, uid int, title, body string) (int, error) {
 	// Insert the post into the DB and get that new post's ID
 	var newPostId int
@@ -209,4 +210,24 @@ func CreateNewPost(db *sqlx.DB, uid int, title, body string) (int, error) {
 	}
 
 	return newPostId, nil
+}
+
+func CreateNewComment(db *sqlx.DB, uid, pid int, parent sql.NullInt64, body string) (int, error) {
+	// Insert the comemnt into the DB and get that new comment's ID
+	var newCommentId int
+	err := db.Get(&newCommentId, `
+		INSERT INTO comments
+			(uid, pid, parent, body)
+		VALUES
+			($1, $2, $3, $4)
+		RETURNING cid
+	`, uid, pid, parent, body)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		//TODO: log this?
+		return 0, err
+	}
+
+	return newCommentId, nil
 }
