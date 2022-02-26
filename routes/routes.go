@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/gob"
 	"forumbuddy/models"
 	"html/template"
 	"net/http"
@@ -28,7 +29,7 @@ func (app *appState) requireLoggedInMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if sess.Values["uid"] == nil {
+		if sess.Values["user"] == nil {
 			http.Redirect(w, r, "/login", 303)
 			// If they do have a session, but there is no 'uid' value, that means they're not logged in
 			//TODO: maybe redirect to /login?
@@ -44,20 +45,20 @@ func (app *appState) requireLoggedInMiddleware(next http.Handler) http.Handler {
 }
 
 // Session by pointer or not? TODO: maybe a better way to do this?
-func getUserIdIfLoggedIn(r *http.Request, session sessions.Store) (int, bool) { //TODO: return entire user struct
+func getUserIdIfLoggedIn(r *http.Request, session sessions.Store) (models.User, bool) { //TODO: return entire user struct
 	sess, err := session.Get(r, "session")
 	if err != nil {
 		// If we failed to read the session, we can't confirm they're logged in
 		//TODO: figure out the best structure for this
-		return 0, false
+		return models.User{}, false
 	}
 
-	if sess.Values["uid"] == nil {
+	if sess.Values["user"] == nil {
 		// If the uid is nil, they're not logged in
-		return 0, false
+		return models.User{}, false
 	}
 
-	return sess.Values["uid"].(int), true
+	return sess.Values["user"].(models.User), true
 }
 
 // Another idea for handling appstate could be to have `AppState` in another package and have it imported by
@@ -84,8 +85,20 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 		sessionStore: sessionStore,
 	}
 
+	// Register the User model with gob so we can save it in the session
+	gob.Register(models.User{})
+
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+
+	//TODO: move elsewhere
+	// Set up 404 handler
+	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("uhto"))
+		w.WriteHeader(http.StatusNotFound)
+	})
+
 	//router.Use(middleware.RealIP)
 	//TODO: test this so we can use the isloggedin middleware  - loggedInRouter := router.NewRoute().Subrouter()
 
@@ -115,7 +128,6 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 }
 
 func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
-
 	// Get the 10 most recent posts
 	posts, err := models.GetRecentPosts(app.db, 10)
 

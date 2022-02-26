@@ -40,14 +40,14 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	uid, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
+	curUser, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
 
 	if !isLoggedIn {
 		//TODO: 401
 		return
 	}
 
-	_, err := models.CreateNewComment(app.db, uid, pid, parentCid, text)
+	_, err := models.CreateNewComment(app.db, curUser.Uid, pid, parentCid, text)
 
 	if err != nil {
 		http.Error(w, "Failed to create the comment", 500)
@@ -68,7 +68,7 @@ func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) 
 
 	comment, err := models.GetCommentById(app.db, commentId)
 
-	_, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
+	curUser, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -76,7 +76,8 @@ func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	app.templates.ExecuteTemplate(w, "comment.tmpl", map[string]interface{}{
-		"Comment":    comment,
-		"IsLoggedIn": isLoggedIn,
+		"Comment":     comment,
+		"IsLoggedIn":  isLoggedIn,
+		"CurrentUser": curUser,
 	})
 }

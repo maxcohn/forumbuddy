@@ -26,18 +26,20 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the user is logged in to show login status
-	_, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
+	curUser, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
 
 	// Get the post and its comments from the database
 	post, err := models.GetPostAndCommentsById(app.db, postId)
 	if err != nil {
 		http.Error(w, "There was an error getting the requests post and comments", 500)
+		//TODO: make a 500 error page
 		return
 	}
 
 	app.templates.ExecuteTemplate(w, "post.tmpl", map[string]interface{}{
 		"Post":        post,
-		"CurrentUser": isLoggedIn,
+		"IsLoggedIn":  isLoggedIn,
+		"CurrentUser": curUser,
 	})
 }
 
@@ -48,9 +50,9 @@ func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO: validate?
 	title := r.Form["title"][0]
 	text := r.Form["text"][0]
-	uid, _ := getUserIdIfLoggedIn(r, app.sessionStore)
+	curUser, _ := getUserIdIfLoggedIn(r, app.sessionStore)
 
-	newPostId, err := models.CreateNewPost(app.db, uid, title, text)
+	newPostId, err := models.CreateNewPost(app.db, curUser.Uid, title, text)
 
 	if err != nil {
 		http.Error(w, "Failed to create the post", 500)

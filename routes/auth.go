@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"forumbuddy/models"
 	"log"
 	"net/http"
 )
@@ -13,7 +14,7 @@ func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If the user is already logged in, redirect them to the homepage
-	if sess.Values["uid"] != nil {
+	if sess.Values["user"] != nil {
 		//TODO: remove? sess.Values["uid"] = nil
 		sess.Save(r, w)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
@@ -34,22 +35,20 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO: add password checking. No password checking at the moment for development
 
 	//TODO: move this to models this
-	var uid int
+	var user models.User
 	//err := app.db.QueryRowx(`SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)`, username).Scan(&isMatch)
-	err := app.db.QueryRowx(`SELECT uid from users as u where username = $1`, username).Scan(&uid)
+	err := app.db.Get(&user, `SELECT uid, username from users as u where username = $1`, username)
 
 	if err != nil {
 		// If there is an error, there were no rows
 		log.Println("Failed to login")
+		//TODO: return status code
 		return
 	}
 
 	if err != nil {
 		log.Println("Error: ", err.Error())
 	}
-
-	log.Println("uid?: ", uid)
-	log.Println("username?: ", username)
 
 	//TODO: hadnle error
 	sess, err := app.sessionStore.Get(r, "session")
@@ -59,10 +58,15 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess.Values["uid"] = uid
+	sess.Values["user"] = user
 	//sess.Values["username"] = username
 
-	sess.Save(r, w)
+	err = sess.Save(r, w)
+	if err != nil {
+		//TODO: handle error
+		log.Println("Error saving session: ", err.Error())
+		return
+	}
 
 	// Validate username and password
 
