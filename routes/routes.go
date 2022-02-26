@@ -25,8 +25,7 @@ func (app *appState) requireLoggedInMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			// If there was an error reading the sessions, we can't confirm they're logged in
 			//TODO: log that we failed to read the session
-			w.WriteHeader(500)
-			w.Write([]byte("There was an error on our side"))
+			app.render500Page(w)
 			return
 		}
 
@@ -163,4 +162,9 @@ func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
 		"IsLoggedIn":  isLoggedIn,
 		"CurrentUser": curUser,
 	})
+}
+
+func (app *appState) render500Page(w http.ResponseWriter) {
+	w.WriteHeader(500)
+	app.templates.ExecuteTemplate(w, "500.tmpl", nil)
 }

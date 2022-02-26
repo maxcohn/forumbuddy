@@ -72,7 +72,7 @@ func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	newPostId, err := models.CreateNewPost(app.db, curUser.Uid, title, text)
 
 	if err != nil {
-		http.Error(w, "Failed to create the post", 500)
+		app.render500Page(w)
 		return
 	}
 

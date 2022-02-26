@@ -2,34 +2,38 @@ package routes
 
 import (
 	"forumbuddy/models"
+	"forumbuddy/utils"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
+	// Get the session
 	sess, err := app.sessionStore.Get(r, "session")
 	if err != nil {
-		//TODO: figure out how to handle this case (since it shouldn't happen, I think, maybe just log and 500)
-		return
+		app.render500Page(w)
 	}
 
 	// If the user is already logged in, redirect them to the homepage
 	if sess.Values["user"] != nil {
-		//TODO: remove? sess.Values["uid"] = nil
-		sess.Save(r, w)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{
-		//"User": sess.Values["username"],
-	})
+	app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{})
 }
 
 func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
-	username := r.Form["username"][0] //TODO: better error handling/validation here
+	// Validate username from form
+	username, err := utils.FormValueStringNonEmpty(r.Form, "username")
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	username = strings.TrimSpace(username)
 	//password := r.Form["password"]
 
 	//TODO: add password checking. No password checking at the moment for development
@@ -37,7 +41,7 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO: move this to models this
 	var user models.User
 	//err := app.db.QueryRowx(`SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)`, username).Scan(&isMatch)
-	err := app.db.Get(&user, `SELECT uid, username from users as u where username = $1`, username)
+	err = app.db.Get(&user, `SELECT uid, username from users as u where username = $1`, username)
 
 	if err != nil {
 		// If there is an error, there were no rows
@@ -50,11 +54,10 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error: ", err.Error())
 	}
 
-	//TODO: hadnle error
+	// Read the session
 	sess, err := app.sessionStore.Get(r, "session")
 	if err != nil {
-		//TODO: handle error
-		log.Println("Error reading session")
+		app.render500Page(w)
 		return
 	}
 
@@ -63,8 +66,7 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = sess.Save(r, w)
 	if err != nil {
-		//TODO: handle error
-		log.Println("Error saving session: ", err.Error())
+		app.render500Page(w)
 		return
 	}
 
@@ -83,7 +85,7 @@ func (app *appState) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Get session
 	sess, err := app.sessionStore.Get(r, "session")
 	if err != nil {
-		http.Error(w, "", 500) //TODO: better 500 and 404 hadling?
+		app.render500Page(w)
 		return
 	}
 
@@ -92,7 +94,7 @@ func (app *appState) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = sess.Save(r, w)
 	if err != nil {
-		http.Error(w, "", 500) //TODO: better 500 and 404 hadling?
+		app.render500Page(w)
 		return
 	}
 

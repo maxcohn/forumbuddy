@@ -52,7 +52,7 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 	_, err = models.CreateNewComment(app.db, curUser.Uid, pid, parentCid, text)
 
 	if err != nil {
-		http.Error(w, "Failed to create the comment", 500)
+		app.render500Page(w)
 		return
 	}
 
