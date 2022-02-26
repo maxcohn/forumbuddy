@@ -2,9 +2,9 @@ package routes
 
 import (
 	"forumbuddy/models"
+	"forumbuddy/utils"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -55,17 +55,15 @@ func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	// Get the values from the form and validate that they are non-empty strings
-	if !r.Form.Has("title") && strings.TrimSpace(r.Form.Get("title")) != "" { //TODO: abstract this and below?
-		http.Error(w, "Missing parameter or empty parameter 'title'", 400)
-		return
+	title, err := utils.FormValueStringNonEmpty(r.Form, "title")
+	if err != nil {
+		http.Error(w, err.Error(), 400)
 	}
-	title := r.Form.Get("title")
 
-	if !r.Form.Has("text") && strings.TrimSpace(r.Form.Get("text")) != "" {
-		http.Error(w, "Missing parameter or empty parameter 'text'", 400)
-		return
+	text, err := utils.FormValueStringNonEmpty(r.Form, "text")
+	if err != nil {
+		http.Error(w, err.Error(), 400)
 	}
-	text := r.Form.Get("text")
 
 	// Get the current user (we already verified they're logged in via middleware)
 	curUser, _ := getUserIfLoggedIn(r, app.sessionStore)

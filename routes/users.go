@@ -32,3 +32,8 @@ func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	app.templates.ExecuteTemplate(w, "user.tmpl", user)
 }
+
+//TODO: change name to signupHandler?
+func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
+	//TODO:
+}

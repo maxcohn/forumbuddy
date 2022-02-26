@@ -2,33 +2,38 @@ package routes
 
 import (
 	"database/sql"
-	"fmt"
 	"forumbuddy/models"
+	"forumbuddy/utils"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	// TODO: convert to chi like in main.go
 )
 
 func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request) {
-	//TODO: rqeuire login
-	fmt.Println("hit create new commeent")
-	r.ParseForm()
-	//TODO: validate?
+	// Auth is required on this route
 
+	// Parse the form and validate the values
+	r.ParseForm()
+
+	// Validate the form values
 	// Make sure the text parameter is present and not empty
+	text, err := utils.FormValueStringNonEmpty(r.Form, "text")
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
 
 	// Make sure the 'pid' parameter is present and an int greater than zero
+	pid, err := utils.FormValueIntGtZero(r.Form, "pid")
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
 
 	// Check if the 'cid' (parent cid) is valid. If it is, use it, otherwise, make it null
-
-	text := r.Form["text"][0]
-	//TODO: better error hadnling
-	pid, _ := strconv.Atoi(r.Form["pid"][0])
-
 	var parentCid sql.NullInt64
-	if tmpParentCid, err := strconv.Atoi(r.Form["cid"][0]); err != nil {
+	if tmpParentCid, err := strconv.Atoi(r.Form.Get("cid")); err != nil {
 		parentCid = sql.NullInt64{
 			Valid: false,
 			Int64: 0,
@@ -40,14 +45,11 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	curUser, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
+	// Get the current user
+	curUser, _ := getUserIfLoggedIn(r, app.sessionStore)
 
-	if !isLoggedIn {
-		//TODO: 401
-		return
-	}
-
-	_, err := models.CreateNewComment(app.db, curUser.Uid, pid, parentCid, text)
+	// Insert the new comment into the DB
+	_, err = models.CreateNewComment(app.db, curUser.Uid, pid, parentCid, text)
 
 	if err != nil {
 		http.Error(w, "Failed to create the comment", 500)
@@ -55,25 +57,26 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	http.Redirect(w, r, "/post/"+strconv.Itoa(pid), 303)
-	//TODO: return 201
-}
-
-//TODO: change name to signupHandler?
-func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
-
 }
 
 func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) {
-	commentId, _ := strconv.Atoi(chi.URLParam(r, "id"))
-
-	comment, err := models.GetCommentById(app.db, commentId)
-
-	curUser, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	// Get the comment ID from the router param
+	commentId, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || commentId <= 0 {
+		w.WriteHeader(404)
+		app.templates.ExecuteTemplate(w, "404.tmpl", nil)
 		return
 	}
+
+	// Get the comment from the DB
+	comment, err := models.GetCommentById(app.db, commentId)
+	if err != nil {
+		w.WriteHeader(404)
+		app.templates.ExecuteTemplate(w, "404.tmpl", nil)
+		return
+	}
+
+	curUser, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
 
 	app.templates.ExecuteTemplate(w, "comment.tmpl", map[string]interface{}{
 		"Comment":     comment,
