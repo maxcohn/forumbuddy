@@ -83,3 +83,56 @@ func TestFormValueIntGtZeroInvalid(t *testing.T) {
 		}
 	}
 }
+
+func TestFormValueStringNonEmptyValid(t *testing.T) {
+	form := []struct {
+		param    string
+		expected string
+		input    url.Values
+	}{
+		{
+			"singlechar",
+			"a",
+			url.Values{"singlechar": []string{"a"}},
+		},
+		{
+			"afewwords",
+			"a few words",
+			url.Values{"afewwords": []string{"a few words"}},
+		},
+	}
+
+	for _, formVal := range form {
+		output, err := utils.FormValueStringNonEmpty(formVal.input, formVal.param)
+		if err != nil {
+			t.Errorf("Error in validating form value: %s", err.Error())
+		}
+
+		if output != formVal.expected {
+			t.Errorf("Output value doesn't match expected: Expected: %s, received: %s.", formVal.expected, output)
+		}
+	}
+}
+
+func TestFormValueStringNonEmptyInvalid(t *testing.T) {
+	form := []struct {
+		param string
+		input url.Values
+	}{
+		{
+			"emptystring",
+			url.Values{"emptystring": []string{""}},
+		},
+		{
+			"abunchofspace",
+			url.Values{"abunchofspace": []string{"                "}},
+		},
+	}
+
+	for _, formVal := range form {
+		output, err := utils.FormValueStringNonEmpty(formVal.input, formVal.param)
+		if err == nil {
+			t.Errorf("Invalid values passed test. Input: %s. Output: %s ", formVal.input.Get(formVal.param), output)
+		}
+	}
+}

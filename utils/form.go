@@ -22,9 +22,9 @@ func FormValueIntGtZero(urlValues url.Values, param string) (int, error) {
 }
 
 func FormValueStringNonEmpty(urlValues url.Values, param string) (string, error) {
-	if !urlValues.Has("text") || strings.TrimSpace(urlValues.Get("text")) != "" {
+	if !urlValues.Has(param) || strings.TrimSpace(urlValues.Get(param)) == "" {
 		return "", errors.New(fmt.Sprintf("Missing parameter or empty parameter '%s'", param))
 	}
 
-	return urlValues.Get("text"), nil
+	return urlValues.Get(param), nil
 }
