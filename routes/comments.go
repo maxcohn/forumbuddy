@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux" // TODO: convert to chi like in main.go
+	"github.com/go-chi/chi/v5"
+	// TODO: convert to chi like in main.go
 )
 
 func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +64,7 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) {
-	routeVars := mux.Vars(r)
-	commentId, _ := strconv.Atoi(routeVars["id"])
+	commentId, _ := strconv.Atoi(chi.URLParam(r, "id"))
 
 	comment, err := models.GetCommentById(app.db, commentId)
 

@@ -2,18 +2,18 @@ package routes
 
 import (
 	"forumbuddy/models"
-	"github.com/gorilla/mux" // TODO: convert to chi like in main.go
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
+	// TODO: convert to chi like in main.go
 )
 
 func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
-	routeVars := mux.Vars(r)
-
 	var user models.User
 
-	if uid, err := strconv.Atoi(routeVars["idOrUsername"]); err != nil {
-		username := routeVars["idOrUsername"]
+	if uid, err := strconv.Atoi(chi.URLParam(r, "idOrUsername")); err != nil {
+		username := chi.URLParam(r, "idOrUsername")
 
 		user, err = models.GetUserByUsername(app.db, username)
 

@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux" // TODO: convert to chi like in main.go
+	"github.com/go-chi/chi/v5"
+	// TODO: convert to chi like in main.go
 )
 
 func (app *appState) newPostPageHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,8 +17,7 @@ func (app *appState) newPostPageHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
-	routeVars := mux.Vars(r)
-	postId, _ := strconv.Atoi(routeVars["id"])
+	postId, _ := strconv.Atoi(chi.URLParam(r, "id"))
 
 	_, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
 	fmt.Println("IsLoggedIn? ", isLoggedIn)

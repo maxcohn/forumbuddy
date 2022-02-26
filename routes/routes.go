@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/gorilla/mux" // TODO: convert to chi like in main.go
+	"github.com/go-chi/chi/v5" // TODO: convert to chi like in main.go
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 )
@@ -76,30 +76,30 @@ func (t *test) postPageHandler(w http.ResponseWriter, r *http.Request) {
 
 //TODO: left off with user login For now, maybe we should ignore argon2id and hashing and just use a map for checking
 //TODO: maybe switch from gorilla mux to chi?
-func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.Store) *mux.Router {
+func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.Store) *chi.Mux {
 	app := appState{
 		db:           db,
 		templates:    templates,
 		sessionStore: sessionStore,
 	}
 
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	//TODO: test this so we can use the isloggedin middleware  - loggedInRouter := router.NewRoute().Subrouter()
 
 	// Page rendering routes
-	router.HandleFunc("/", app.indexHandler).Methods("GET")
-	router.HandleFunc("/newpost", app.newPostPageHandler).Methods("GET") //TODO: require loggedin
-	router.HandleFunc("/post/{id:[0-9]+}", app.postPageHandler).Methods("GET")
-	router.HandleFunc("/comment/{id:[0-9]+}", app.commentPageHandler).Methods("GET")
-	router.HandleFunc("/user/{idOrUsername}", app.userPageHandler).Methods("GET")
+	router.Get("/", app.indexHandler)
+	router.Get("/newpost", app.newPostPageHandler)
+	router.Get("/post/{id:[0-9]+}", app.postPageHandler)
+	router.Get("/comment/{id:[0-9]+}", app.commentPageHandler)
+	router.Get("/user/{idOrUsername}", app.userPageHandler)
 
-	router.HandleFunc("/post", app.createPostHandler).Methods("POST")       //TODO: require loggedin
-	router.HandleFunc("/comment", app.createCommentHandler).Methods("POST") //TODO: require loggedin
+	router.Post("/post", app.createPostHandler)       //TODO: require loggedin
+	router.Post("/comment", app.createCommentHandler) //TODO: require loggedin
 
 	// User related routes
-	router.HandleFunc("/login", app.loginPageHandler).Methods("GET")
+	router.Get("/login", app.loginPageHandler)
 
-	router.HandleFunc("/login", app.loginUserHandler).Methods("POST")
+	router.Post("/login", app.loginUserHandler)
 
 	return router
 }
