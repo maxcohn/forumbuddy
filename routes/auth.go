@@ -78,5 +78,24 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *appState) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
+	// Auth required
 
+	// Get session
+	sess, err := app.sessionStore.Get(r, "session")
+	if err != nil {
+		http.Error(w, "", 500) //TODO: better 500 and 404 hadling?
+		return
+	}
+
+	// Clear the user from the session and save it
+	sess.Values["user"] = nil
+
+	err = sess.Save(r, w)
+	if err != nil {
+		http.Error(w, "", 500) //TODO: better 500 and 404 hadling?
+		return
+	}
+
+	// Redirect to home page
+	http.Redirect(w, r, "/", 303)
 }

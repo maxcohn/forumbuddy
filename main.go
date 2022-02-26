@@ -15,18 +15,13 @@ import (
 )
 
 /*TODO:
-* user validation via hash (argon2id)
-* Middleware for auth above
-* cookie setup middleware?
-* Gorrilla mux routing
-* Create new post/user/comment
-* Post rating
-* Session expiration
-* templates
-* caching routes (only if not logged in?)
-*	Maybe add caching to models individually for expensive things like post and comments?
-* fix templates using base template
-* Add is_link bool to schema and update models
+ * user validation via hash (argon2id)
+ * Post rating
+ * Session expiration
+ * caching routes (only if not logged in?)
+ *	Maybe add caching to models individually for expensive things like post and comments?
+ * Add is_link bool to schema and update models
+ * Redis for ratelimiting
  */
 func main() {
 

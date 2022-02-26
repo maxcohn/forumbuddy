@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-//TODO: document
-//TODO: unit test all of these
+// Checks the given url.Values for the given param and validates that it is an
+// integer greater than zero. Otherwise, returns an error.
 func FormValueIntGtZero(urlValues url.Values, param string) (int, error) {
 	// Attempt to parse there string. If it fails to parse or isn't greater than zero, return an error
 	// This covers the case where the param doesn't exist, because it would return an empty string and fail to parse
@@ -21,6 +21,8 @@ func FormValueIntGtZero(urlValues url.Values, param string) (int, error) {
 	return intVal, nil
 }
 
+// Checks the given ur.Values for the given param and validates that it is a non-empty
+// string. Otherwise, returns an error.
 func FormValueStringNonEmpty(urlValues url.Values, param string) (string, error) {
 	if !urlValues.Has(param) || strings.TrimSpace(urlValues.Get(param)) == "" {
 		return "", errors.New(fmt.Sprintf("Missing parameter or empty parameter '%s'", param))

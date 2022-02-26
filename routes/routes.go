@@ -136,7 +136,7 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 	// Authentication related routes
 	router.Get("/login", app.loginPageHandler)
 	router.Post("/login", app.loginUserHandler)
-	router.Get("/logout", app.logoutUserHandler)
+	router.Get("/logout", app.requireLoggedInMiddleware(http.HandlerFunc(app.logoutUserHandler)).ServeHTTP)
 
 	return router
 }
