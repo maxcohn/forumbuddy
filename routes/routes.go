@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"forumbuddy/models"
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5" // TODO: convert to chi like in main.go
@@ -136,7 +137,17 @@ func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if the user is logged in to show login status
+	curUser, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
+
 	app.templates.ExecuteTemplate(w, "index.tmpl", map[string]interface{}{
-		"Posts": posts,
+		"Posts":       posts,
+		"IsLoggedIn":  isLoggedIn,
+		"CurrentUser": curUser,
+	})
+
+	log.Println(map[string]interface{}{
+		"IsLoggedIn":  isLoggedIn,
+		"CurrentUser": curUser,
 	})
 }

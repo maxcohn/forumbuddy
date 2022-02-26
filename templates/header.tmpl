@@ -13,7 +13,7 @@
 </head>
 <body>
 	<header>
-		ForumBuddy | <a href="/login">Login</a>
+		ForumBuddy | {{if .IsLoggedIn}}<a href="/user/{{.CurrentUser.Username}}">{{.CurrentUser.Username}}</a>{{else}}<a href="/login">Login</a>{{end}}
 	</header>
 
 	<div class="content">
