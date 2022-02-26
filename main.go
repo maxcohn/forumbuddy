@@ -44,6 +44,7 @@ func main() {
 
 	mainRouter := chi.NewRouter()
 	mainRouter.Mount("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
+	//TODO: is this hacky or acceptable? I'd rather it be at the root for standards purposes instead of in static, but having it in static would be nicer
 
 	mainRouter.Mount("/", router)
 

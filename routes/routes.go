@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5" // TODO: convert to chi like in main.go
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 )
@@ -43,7 +44,7 @@ func (app *appState) requireLoggedInMiddleware(next http.Handler) http.Handler {
 }
 
 // Session by pointer or not? TODO: maybe a better way to do this?
-func getUserIdIfLoggedIn(r *http.Request, session sessions.Store) (int, bool) {
+func getUserIdIfLoggedIn(r *http.Request, session sessions.Store) (int, bool) { //TODO: return entire user struct
 	sess, err := session.Get(r, "session")
 	if err != nil {
 		// If we failed to read the session, we can't confirm they're logged in
@@ -84,22 +85,31 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 	}
 
 	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	//router.Use(middleware.RealIP)
 	//TODO: test this so we can use the isloggedin middleware  - loggedInRouter := router.NewRoute().Subrouter()
 
+	//TODO: maybe move the route creating to each file? e.g. app.authRouter, app.commentRouter?
 	// Page rendering routes
+	/*router.Route("/newpost", func(r chi.Router) {
+		r.Use(app.requireLoggedInMiddleware)
+		r.Get("/", app.newPostPageHandler)
+	})*/
 	router.Get("/", app.indexHandler)
-	router.Get("/newpost", app.newPostPageHandler)
+	router.Get("/newpost", app.requireLoggedInMiddleware(http.HandlerFunc(app.newPostPageHandler)).ServeHTTP)
 	router.Get("/post/{id:[0-9]+}", app.postPageHandler)
 	router.Get("/comment/{id:[0-9]+}", app.commentPageHandler)
 	router.Get("/user/{idOrUsername}", app.userPageHandler)
 
-	router.Post("/post", app.createPostHandler)       //TODO: require loggedin
-	router.Post("/comment", app.createCommentHandler) //TODO: require loggedin
+	// Creation routes
+	router.Post("/post", app.requireLoggedInMiddleware(http.HandlerFunc(app.createPostHandler)).ServeHTTP)       //TODO: require loggedin
+	router.Post("/comment", app.requireLoggedInMiddleware(http.HandlerFunc(app.createCommentHandler)).ServeHTTP) //TODO: require loggedin
+	//TODO: route for user signup
 
-	// User related routes
+	// Authentication related routes
 	router.Get("/login", app.loginPageHandler)
-
 	router.Post("/login", app.loginUserHandler)
+	router.Get("/logout", app.logoutUserHandler)
 
 	return router
 }
