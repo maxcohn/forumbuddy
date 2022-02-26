@@ -45,6 +45,7 @@ func main() {
 	mainRouter := chi.NewRouter()
 	mainRouter.Mount("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 	//TODO: favicon.ico
+	mainRouter.Mount("/favicon.ico", http.FileServer(http.Dir("./static")))
 	mainRouter.Mount("/", router)
 
 	srv := &http.Server{

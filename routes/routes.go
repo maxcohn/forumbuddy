@@ -46,7 +46,7 @@ func (app *appState) requireLoggedInMiddleware(next http.Handler) http.Handler {
 }
 
 // Session by pointer or not? TODO: maybe a better way to do this?
-func getUserIdIfLoggedIn(r *http.Request, session sessions.Store) (models.User, bool) { //TODO: return entire user struct
+func getUserIfLoggedIn(r *http.Request, session sessions.Store) (models.User, bool) { //TODO: return entire user struct
 	sess, err := session.Get(r, "session")
 	if err != nil {
 		// If we failed to read the session, we can't confirm they're logged in
@@ -77,6 +77,17 @@ func (t *test) postPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 */
 
+func (app *appState) render404Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		next.ServeHTTP(w, r)
+
+		// Check if there was a 404
+		log.Println(r.Response.StatusCode)
+
+	})
+}
+
 //TODO: left off with user login For now, maybe we should ignore argon2id and hashing and just use a map for checking
 //TODO: maybe switch from gorilla mux to chi?
 func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.Store) *chi.Mux {
@@ -91,7 +102,9 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
+	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)
+	//router.Use(app.render404Middleware) //TODO: 404 handler, or just make a wrapper function
 
 	//TODO: move elsewhere
 	// Set up 404 handler
@@ -138,7 +151,7 @@ func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the user is logged in to show login status
-	curUser, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
+	curUser, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
 
 	app.templates.ExecuteTemplate(w, "index.tmpl", map[string]interface{}{
 		"Posts":       posts,

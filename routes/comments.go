@@ -40,7 +40,7 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	curUser, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
+	curUser, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
 
 	if !isLoggedIn {
 		//TODO: 401
@@ -68,7 +68,7 @@ func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) 
 
 	comment, err := models.GetCommentById(app.db, commentId)
 
-	curUser, isLoggedIn := getUserIdIfLoggedIn(r, app.sessionStore)
+	curUser, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
