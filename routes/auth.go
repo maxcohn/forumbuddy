@@ -110,7 +110,7 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse form for username and passwords
-	r.ParseForm() //TODO: on 400, rerender signup with error message
+	r.ParseForm()
 	username, err := utils.FormValueStringNonEmpty(r.Form, "username")
 	if err != nil {
 		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid username"})

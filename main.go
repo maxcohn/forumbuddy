@@ -25,6 +25,7 @@ import (
  * Redis for ratelimiting
  * Migrate error handling to something like this: https://go.dev/blog/error-handling-and-go
  * Add signup link to header
+ * replace returns from models with pointers
  */
 
 /* New error handling example:

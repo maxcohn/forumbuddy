@@ -4,21 +4,99 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/static/style.css" />
+  
 
 
-  <!--<link rel="stylesheet" href="/static/bulma.min.css" />-->
+  <link rel="stylesheet" href="/static/bulma.min.css" />
+
+	<link rel="stylesheet" href="/static/style.css" />
 
 	<title>change me</title>
 </head>
 <body>
 	<header>
-		ForumBuddy | {{if .IsLoggedIn}}<a href="/user/{{.CurrentUser.Username}}">{{.CurrentUser.Username}}</a> | <a href="/logout">Logout</a>{{else}}<a href="/login">Login</a>{{end}}
+		<!--ForumBuddy | {{if .IsLoggedIn}}<a href="/user/{{.CurrentUser.Username}}">{{.CurrentUser.Username}}</a> | <a href="/logout">Logout</a>{{else}}<a href="/login">Login</a>{{end}}-->
+
+		<nav class="navbar" role="navigation" aria-label="main navigation">
+			<div class="navbar-brand">
+				<a class="navbar-item" href="/">
+					ForumBuddy
+				</a>
+			</div>
+		
+			<div class="navbar-menu">
+				<!--
+				<div class="navbar-start">
+					<a class="navbar-item">
+						Home
+					</a>
+		
+					<a class="navbar-item">
+						Documentation
+					</a>
+		
+					<div class="navbar-item has-dropdown is-hoverable">
+						<a class="navbar-link">
+							More
+						</a>
+		
+						<div class="navbar-dropdown">
+							<a class="navbar-item">
+								About
+							</a>
+							<a class="navbar-item">
+								Jobs
+							</a>
+							<a class="navbar-item">
+								Contact
+							</a>
+							<hr class="navbar-divider">
+							<a class="navbar-item">
+								Report an issue
+							</a>
+						</div>
+					</div>
+				</div>
+			-->
+		
+				<div class="navbar-end">
+					{{if .IsLoggedIn}}
+						<!--
+							<a href="/user/{{.CurrentUser.Username}}">{{.CurrentUser.Username}}</a> | <a href="/logout">Logout</a>
+						-->
+						<div class="navbar-item">
+							<div class="buttons">
+								<a class="button" href="/user/{{.CurrentUser.Username}}">
+									{{.CurrentUser.Username}}
+								</a>
+								<a class="button is-light" href="/logout">
+									Logout
+								</a>
+							</div>
+						</div>
+					{{else}}
+						<div class="navbar-item">
+							<div class="buttons">
+								<a class="button is-primary" href="/signup">
+									<strong>Sign up</strong>
+								</a>
+								<a class="button is-light" href="/login">
+									Log in
+								</a>
+							</div>
+						</div>
+					{{end}}
+					
+				</div>
+			</div>
+		</nav>
 	</header>
 
 	{{if .Error}}
-		<div class="error-message">
-			{{.Error}}
+		<div class="container">
+			<div class="notification is-danger">
+				{{.Error}}
+			</div>
 		</div>
 	{{end}}
 

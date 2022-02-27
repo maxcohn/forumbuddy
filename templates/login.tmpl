@@ -1,17 +1,31 @@
 {{template "header" .}}
 
-<form action="/login" method="POST" >
-    <label for="username">
-        Username:
-        <input type="text" id="username" name="username" />
-    </label>
-
-    <label for="password">
-        Password:
-        <input type="password" name="password" />
-    </label>
+<div class="login-form container is-max-desktop">
+    <form action="/login" method="POST">
+        <div class="field is-horizontal">
+            <label class="label field-label">Username</label>
+            <div class="control field-body">
+                <input class="input" type="text" name="username">
+            </div>
+        </div>
     
-    <input type="submit" value="Login" />
-</form>
+        <div class="field is-horizontal">
+            <label class="label field-label">Password</label>
+            <div class="control field-body">
+                <input class="input" type="password" name="password">
+            </div>
+        </div>
+        
+        <div class="field is-horizontal">
+            <label class="label field-label"><!--Empty for spacing--></label>
+            <div class="control field-content">
+              <button class="button is-primary">
+                Login
+              </button>
+            </div>
+        </div>
+    </form>
+</div>
+
 
 {{template "footer"}}
