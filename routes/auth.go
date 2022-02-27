@@ -13,6 +13,7 @@ func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
 	sess, err := app.sessionStore.Get(r, "session")
 	if err != nil {
 		app.render500Page(w)
+		return
 	}
 
 	// If the user is already logged in, redirect them to the homepage

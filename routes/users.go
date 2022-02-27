@@ -19,8 +19,7 @@ func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
 		user, err = models.GetUserByUsername(app.db, username)
 
 		if err != nil {
-			w.WriteHeader(404)
-			app.templates.ExecuteTemplate(w, "404.tmpl", nil)
+			app.render404Page(w)
 			return
 		}
 	} else {
@@ -28,8 +27,7 @@ func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
 		user, err = models.GetUserById(app.db, uid)
 
 		if err != nil {
-			w.WriteHeader(404)
-			app.templates.ExecuteTemplate(w, "404.tmpl", nil)
+			app.render404Page(w)
 			return
 		}
 	}

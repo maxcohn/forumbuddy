@@ -21,8 +21,7 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// If the post id wasn't specified or is invalid, return a 404
 	if err != nil { //TODO: make a wrapper for this that takes a string for a context message
-		w.WriteHeader(404)
-		app.templates.ExecuteTemplate(w, "404.tmpl", nil)
+		app.render404Page(w)
 		return
 	}
 
@@ -34,8 +33,7 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// If we couldn't get the post, it doesn't exist, so return a 404
 	if err != nil {
-		w.WriteHeader(404)
-		app.templates.ExecuteTemplate(w, "404.tmpl", nil)
+		app.render404Page(w)
 		return
 	}
 

@@ -7,8 +7,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi/v5" // TODO: convert to chi like in main.go
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 )
@@ -17,6 +18,7 @@ type appState struct {
 	db           *sqlx.DB
 	templates    *template.Template
 	sessionStore sessions.Store
+	redis        *redis.Client
 }
 
 func (app *appState) requireLoggedInMiddleware(next http.Handler) http.Handler {
@@ -89,11 +91,12 @@ func (app *appState) render404Middleware(next http.Handler) http.Handler {
 
 //TODO: left off with user login For now, maybe we should ignore argon2id and hashing and just use a map for checking
 //TODO: maybe switch from gorilla mux to chi?
-func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.Store) *chi.Mux {
+func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.Store, redis *redis.Client) *chi.Mux {
 	app := appState{
 		db:           db,
 		templates:    templates,
 		sessionStore: sessionStore,
+		redis:        redis,
 	}
 
 	// Register the User model with gob so we can save it in the session
@@ -167,4 +170,9 @@ func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
 func (app *appState) render500Page(w http.ResponseWriter) {
 	w.WriteHeader(500)
 	app.templates.ExecuteTemplate(w, "500.tmpl", nil)
+}
+
+func (app *appState) render404Page(w http.ResponseWriter) {
+	w.WriteHeader(404)
+	app.templates.ExecuteTemplate(w, "404.tmpl", nil)
 }

@@ -63,16 +63,14 @@ func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) 
 	// Get the comment ID from the router param
 	commentId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || commentId <= 0 {
-		w.WriteHeader(404)
-		app.templates.ExecuteTemplate(w, "404.tmpl", nil)
+		app.render404Page(w)
 		return
 	}
 
 	// Get the comment from the DB
 	comment, err := models.GetCommentById(app.db, commentId)
 	if err != nil {
-		w.WriteHeader(404)
-		app.templates.ExecuteTemplate(w, "404.tmpl", nil)
+		app.render404Page(w)
 		return
 	}
 

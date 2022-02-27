@@ -9,15 +9,15 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/sessions"
+	"github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"gopkg.in/boj/redistore.v1"
 )
 
 /*TODO:
  * user validation via hash (argon2id)
  * Post rating
- * Session expiration
  * caching routes (only if not logged in?)
  *	Maybe add caching to models individually for expensive things like post and comments?
  * Add is_link bool to schema and update models
@@ -31,11 +31,25 @@ func main() {
 
 	secretKey := "thisisexactly32charactersmydudes"
 
-	//TODO: swap this out for redis
 	//TODO: get secret key from env
-	sessionStore := sessions.NewCookieStore([]byte(secretKey))
+	//sessionStore := sessions.NewCookieStore([]byte(secretKey))
+	sessionStore, err := redistore.NewRediStore(10, "tcp", ":6379", "", []byte(secretKey))
+	if err != nil {
+		panic(err)
+	}
+	defer sessionStore.Close()
 
-	router := routes.NewRouter(db, templates, sessionStore)
+	redis := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	//TODO: ping to test conenction
+	//redisStatus := redis.Ping(context.Background())
+	//log.Fatalf(redisStatus.Err().Error())
+
+	router := routes.NewRouter(db, templates, sessionStore, redis)
 
 	mainRouter := chi.NewRouter()
 	mainRouter.Mount("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
