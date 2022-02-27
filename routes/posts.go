@@ -74,5 +74,5 @@ func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/post/"+strconv.Itoa(newPostId), 303)
+	http.Redirect(w, r, "/post/"+strconv.Itoa(newPostId), http.StatusSeeOther)
 }

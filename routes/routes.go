@@ -32,7 +32,7 @@ func (app *appState) requireLoggedInMiddleware(next http.Handler) http.Handler {
 		}
 
 		if sess.Values["user"] == nil {
-			http.Redirect(w, r, "/login", 303)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			// If they do have a session, but there is no 'uid' value, that means they're not logged in
 			//TODO: maybe redirect to /login?
 			return //TODO: report 401

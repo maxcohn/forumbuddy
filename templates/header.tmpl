@@ -16,5 +16,11 @@
 		ForumBuddy | {{if .IsLoggedIn}}<a href="/user/{{.CurrentUser.Username}}">{{.CurrentUser.Username}}</a> | <a href="/logout">Logout</a>{{else}}<a href="/login">Login</a>{{end}}
 	</header>
 
+	{{if .Error}}
+		<div class="error-message">
+			{{.Error}}
+		</div>
+	{{end}}
+
 	<div class="content">
 {{end}}

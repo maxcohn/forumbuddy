@@ -26,8 +26,26 @@ import (
  * Migrate error handling to something like this: https://go.dev/blog/error-handling-and-go
  * Add signup link to header
  */
-func main() {
 
+/* New error handling example:
+type RequestError struct {
+	Error error
+	Message string
+	StatusCode int
+}
+
+fn (re )
+
+type RequestHandler func(http.ResponseWriter, *http.Request) *RequestError
+
+func (fn RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	err := fn(w, r)
+	if err != nil {
+		// Check error code and handle differently
+	}
+}
+*/
+func main() {
 	// Setup data being used
 	db := sqlx.MustConnect("postgres", "user=postgres password=password host=127.0.0.1 sslmode=disable")
 	templates := template.Must(template.New("").ParseGlob("./templates/*.tmpl"))

@@ -56,7 +56,7 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	http.Redirect(w, r, "/post/"+strconv.Itoa(pid), 303)
+	http.Redirect(w, r, "/post/"+strconv.Itoa(pid), http.StatusSeeOther)
 }
 
 func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) {

@@ -3,7 +3,6 @@ package routes
 import (
 	"forumbuddy/models"
 	"forumbuddy/utils"
-	"log"
 	"net/http"
 	"strings"
 
@@ -11,15 +10,9 @@ import (
 )
 
 func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
-	// Get the session
-	sess, err := app.sessionStore.Get(r, "session")
-	if err != nil {
-		app.render500Page(w)
-		return
-	}
-
 	// If the user is already logged in, redirect them to the homepage
-	if sess.Values["user"] != nil {
+	_, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
+	if isLoggedIn {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -33,23 +26,21 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate username and password from form
 	username, err := utils.FormValueStringNonEmpty(r.Form, "username")
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
 		return
 	}
 	username = strings.TrimSpace(username)
 
 	password, err := utils.FormValueStringNonEmpty(r.Form, "password")
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
 		return
 	}
 
 	// Verify the password matches the stored hash and the associated user back
 	user, err := models.VerifyUserPassword(app.db, username, password)
-
 	if err != nil {
-		http.Error(w, "Failed to login", 400)
-		//TODO: open loging page withe error
+		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
 		return
 	}
 
@@ -69,7 +60,7 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect to home page
-	http.Redirect(w, r, "/", 303)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 
 }
 
@@ -93,14 +84,14 @@ func (app *appState) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect to home page
-	http.Redirect(w, r, "/", 303)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *appState) signupPageHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if the user is logged in. If they are, ignore this and redirect them to the homepage
 	_, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
 	if isLoggedIn {
-		http.Redirect(w, r, "/", 303)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
@@ -114,7 +105,7 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if the user is logged in. If they are, ignore this and redirect them to the homepage
 	_, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
 	if isLoggedIn {
-		http.Redirect(w, r, "/", 303)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
@@ -122,25 +113,25 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() //TODO: on 400, rerender signup with error message
 	username, err := utils.FormValueStringNonEmpty(r.Form, "username")
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid username"})
 		return
 	}
 
 	password, err := utils.FormValueStringNonEmpty(r.Form, "password")
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid password or passwords do not match"})
 		return
 	}
 
 	confirmPassword, err := utils.FormValueStringNonEmpty(r.Form, "confirmpassword")
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid password or passwords do not match"})
 		return
 	}
 
 	// Check if both of their passwords match
 	if password != confirmPassword {
-		http.Error(w, "Passwords do not match", 400)
+		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid password or passwords do not match"})
 		return
 	}
 
@@ -152,8 +143,7 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if userExists {
-		//TODO: rerender signup with user exists
-		http.Error(w, "User already exists", 400)
+		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "A user with that username already exists"})
 		return
 	}
 
@@ -164,8 +154,6 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		app.render500Page(w)
 		return
 	}
-
-	log.Print("Username: ", username, "Password hash: ", passwordHash)
 
 	// Store the new user in the database
 	newUser, err := models.CreateNewUser(app.db, username, passwordHash)
@@ -185,5 +173,5 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	sess.Save(r, w)
 
 	// Redirect them to the homepage
-	http.Redirect(w, r, "/", 303)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
