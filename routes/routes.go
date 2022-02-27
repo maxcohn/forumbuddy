@@ -139,6 +139,8 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 	router.Get("/login", app.loginPageHandler)
 	router.Post("/login", app.loginUserHandler)
 	router.Get("/logout", app.requireLoggedInMiddleware(http.HandlerFunc(app.logoutUserHandler)).ServeHTTP)
+	router.Get("/signup", app.signupPageHandler)
+	router.Post("/signup", app.createUserHandler) //TODO: change name?
 
 	return router
 }
@@ -175,4 +177,10 @@ func (app *appState) render500Page(w http.ResponseWriter) {
 func (app *appState) render404Page(w http.ResponseWriter) {
 	w.WriteHeader(404)
 	app.templates.ExecuteTemplate(w, "404.tmpl", nil)
+}
+
+func (app *appState) rateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//TODO: implement rate limiting
+	})
 }

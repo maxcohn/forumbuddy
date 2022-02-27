@@ -1,0 +1,22 @@
+{{template "header" .}}
+
+<form action="/signup" method="POST" >
+    <label for="username">
+        Username:
+        <input type="text" id="username" name="username" />
+    </label>
+
+    <label for="password">
+        Password:
+        <input type="password" name="password" />
+    </label>
+
+    <label for="confirmpassword">
+      Confirm Password:
+      <input type="password" name="confirmpassword" />
+  </label>
+    
+    <input type="submit" value="Login" />
+</form>
+
+{{template "footer"}}

@@ -33,6 +33,7 @@ func TestGetRecentPosts(t *testing.T) {
 }
 
 func TestGetUserByUsername(t *testing.T) {
+	//TODO: remove uid check and just make sure a user is gotten?
 	testCases := []models.User{
 		{Uid: 1, Username: "foo-bar"},
 		{Uid: 2, Username: "pg"},
@@ -58,6 +59,7 @@ func TestGetUserByUsername(t *testing.T) {
 
 func TestGetUserById(t *testing.T) {
 	//TODO: move this outside with the username case?
+	//TODO: remove uid check and just make sure a user is gotten?
 	testCases := []models.User{
 		{Uid: 1, Username: "foo-bar"},
 		{Uid: 2, Username: "pg"},

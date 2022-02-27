@@ -2,9 +2,12 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/alexedwards/argon2id"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -232,4 +235,81 @@ func CreateNewComment(db *sqlx.DB, uid, pid int, parent sql.NullInt64, body stri
 	return newCommentId, nil
 }
 
-//TODO: func CreateNewUser
+func UserExistsByUsername(db *sqlx.DB, username string) (bool, error) {
+	var tossAway int
+	// Check if the user exists
+	err := db.Get(&tossAway, "SELECT 1 FROM users WHERE username = $1", username)
+
+	// If the reported error is that there are no rows, that means the user doesn't exist
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		// If there was an error returned otherwise, that's an actual DB error
+		log.Println("Error checking for user: ", err.Error()) //TODO: better logging
+		return false, err
+	}
+
+	// If we had any results, the user does exist
+	return true, nil
+}
+
+//TODO: shoudl this take teh raw password isntead so we can force it to hash it?
+func CreateNewUser(db *sqlx.DB, username, passwordHash string) (User, error) {
+	var newUser User
+	err := db.Get(&newUser, `
+		WITH user_ins AS (
+			INSERT INTO users
+				(username)
+			VALUES
+				($1)
+			RETURNING uid, username
+		),
+		hash_ins AS (
+			INSERT INTO user_hashes
+				(uid, password_hash)
+			VALUES
+				((SELECT uid FROM user_ins), $2)
+			RETURNING uid
+		)
+		SELECT uid, username FROM user_ins
+	`, username, passwordHash)
+
+	// Check if the user insert failed
+	if err != nil {
+		//TODO: log error
+		return User{}, err
+	}
+
+	return newUser, nil
+}
+
+//TODO: shoudl this take teh raw password isntead so we can force it to hash it?
+func VerifyUserPassword(db *sqlx.DB, username, password string) (User, error) {
+	// Get the hash from the DB for this user
+	var passwordHash string
+	err := db.Get(&passwordHash, `
+		SELECT uh.password_hash
+		FROM users AS u, user_hashes AS uh
+		WHERE u.uid = uh.uid
+			AND u.username = $1
+	`, username)
+
+	if err == sql.ErrNoRows { //TODO: different response for no match?
+		return User{}, err
+	} else if err != nil {
+		return User{}, err
+	}
+
+	// Verify password matches the stored password hash
+	match, err := argon2id.ComparePasswordAndHash(password, passwordHash)
+	if err != nil {
+		return User{}, err
+	}
+
+	if !match {
+		return User{}, errors.New("Password hash didn't match")
+	}
+
+	// Now that we know the hashes match, query the user
+	return GetUserByUsername(db, username)
+}

@@ -18,10 +18,13 @@ import (
 /*TODO:
  * user validation via hash (argon2id)
  * Post rating
+ * Proper logging
  * caching routes (only if not logged in?)
  *	Maybe add caching to models individually for expensive things like post and comments?
  * Add is_link bool to schema and update models
  * Redis for ratelimiting
+ * Migrate error handling to something like this: https://go.dev/blog/error-handling-and-go
+ * Add signup link to header
  */
 func main() {
 

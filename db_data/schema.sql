@@ -35,7 +35,6 @@ CREATE TABLE comments (
 CREATE TABLE user_hashes (
 	uid INT PRIMARY KEY NOT NULL REFERENCES users(uid),
 	password_hash TEXT NOT NULL --TODO: look into this
-
 );
 
 -- procedure for getting comment tree?

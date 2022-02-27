@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/alexedwards/argon2id"
 )
 
 func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,31 +30,27 @@ func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
 func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
-	// Validate username from form
+	// Validate username and password from form
 	username, err := utils.FormValueStringNonEmpty(r.Form, "username")
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
 	}
 	username = strings.TrimSpace(username)
-	//password := r.Form["password"]
 
-	//TODO: add password checking. No password checking at the moment for development
-
-	//TODO: move this to models this
-	var user models.User
-	//err := app.db.QueryRowx(`SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)`, username).Scan(&isMatch)
-	err = app.db.Get(&user, `SELECT uid, username from users as u where username = $1`, username)
-
+	password, err := utils.FormValueStringNonEmpty(r.Form, "password")
 	if err != nil {
-		// If there is an error, there were no rows
-		log.Println("Failed to login")
-		//TODO: return status code
+		http.Error(w, err.Error(), 400)
 		return
 	}
 
+	// Verify the password matches the stored hash and the associated user back
+	user, err := models.VerifyUserPassword(app.db, username, password)
+
 	if err != nil {
-		log.Println("Error: ", err.Error())
+		http.Error(w, "Failed to login", 400)
+		//TODO: open loging page withe error
+		return
 	}
 
 	// Read the session
@@ -63,17 +61,12 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sess.Values["user"] = user
-	//sess.Values["username"] = username
 
 	err = sess.Save(r, w)
 	if err != nil {
 		app.render500Page(w)
 		return
 	}
-
-	// Validate username and password
-
-	// Hash and compare passowrd
 
 	// Redirect to home page
 	http.Redirect(w, r, "/", 303)
@@ -100,5 +93,97 @@ func (app *appState) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect to home page
+	http.Redirect(w, r, "/", 303)
+}
+
+func (app *appState) signupPageHandler(w http.ResponseWriter, r *http.Request) {
+	// Check if the user is logged in. If they are, ignore this and redirect them to the homepage
+	_, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
+	if isLoggedIn {
+		http.Redirect(w, r, "/", 303)
+		return
+	}
+
+	// Render the page template
+	app.templates.ExecuteTemplate(w, "signup.tmpl", nil)
+
+}
+
+//TODO: change name to signupHandler?
+func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
+	// Check if the user is logged in. If they are, ignore this and redirect them to the homepage
+	_, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
+	if isLoggedIn {
+		http.Redirect(w, r, "/", 303)
+		return
+	}
+
+	// Parse form for username and passwords
+	r.ParseForm() //TODO: on 400, rerender signup with error message
+	username, err := utils.FormValueStringNonEmpty(r.Form, "username")
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	password, err := utils.FormValueStringNonEmpty(r.Form, "password")
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	confirmPassword, err := utils.FormValueStringNonEmpty(r.Form, "confirmpassword")
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	// Check if both of their passwords match
+	if password != confirmPassword {
+		http.Error(w, "Passwords do not match", 400)
+		return
+	}
+
+	// Check if the username exists already
+	userExists, err := models.UserExistsByUsername(app.db, username)
+	if err != nil {
+		app.render500Page(w)
+		return
+	}
+
+	if userExists {
+		//TODO: rerender signup with user exists
+		http.Error(w, "User already exists", 400)
+		return
+	}
+
+	// Hash the password
+	passwordHash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
+	if err != nil {
+		//TODO: Log this error because I don't think the password hash should fail
+		app.render500Page(w)
+		return
+	}
+
+	log.Print("Username: ", username, "Password hash: ", passwordHash)
+
+	// Store the new user in the database
+	newUser, err := models.CreateNewUser(app.db, username, passwordHash)
+	if err != nil {
+		app.render500Page(w)
+		return
+	}
+
+	// Set their session as logged in
+	sess, err := app.sessionStore.Get(r, "session")
+	if err != nil {
+		app.render500Page(w)
+		return
+	}
+
+	sess.Values["user"] = newUser
+	sess.Save(r, w)
+
+	// Redirect them to the homepage
 	http.Redirect(w, r, "/", 303)
 }
