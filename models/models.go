@@ -62,9 +62,9 @@ func GetRecentPosts(db *sqlx.DB, limit int) ([]Post, error) {
 	return posts, nil
 }
 
-func GetUserByUsername(db *sqlx.DB, username string) (User, error) {
-	var user User
-	err := db.Get(&user, `
+func GetUserByUsername(db *sqlx.DB, username string) (*User, error) {
+	user := new(User)
+	err := db.Get(user, `
 		SELECT uid, username, created_at
 		FROM users
 		WHERE username = $1
@@ -72,31 +72,31 @@ func GetUserByUsername(db *sqlx.DB, username string) (User, error) {
 
 	if err != nil {
 		//TODO: should I be returning a pointer here so I can pass null
-		return user, err
+		return nil, err
 	}
 
 	return user, nil
 }
 
-func GetUserById(db *sqlx.DB, id int) (User, error) {
-	var user User
-	err := db.Get(&user, `
+func GetUserById(db *sqlx.DB, id int) (*User, error) {
+	user := new(User)
+	err := db.Get(user, `
 		SELECT uid, username, created_at
 		FROM users
 		WHERE uid = $1
 	`, id)
 
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
 	return user, nil
 }
 
-func GetCommentById(db *sqlx.DB, id int) (Comment, error) {
-	var comment Comment
+func GetCommentById(db *sqlx.DB, id int) (*Comment, error) {
+	comment := new(Comment)
 
-	err := db.Get(&comment, `
+	err := db.Get(comment, `
 		SELECT
 			c.cid,
 			c.pid,
@@ -111,7 +111,7 @@ func GetCommentById(db *sqlx.DB, id int) (Comment, error) {
 	`, id)
 
 	if err != nil {
-		return comment, err
+		return nil, err
 	}
 
 	return comment, nil
@@ -119,12 +119,12 @@ func GetCommentById(db *sqlx.DB, id int) (Comment, error) {
 
 //TODO: get comment and children by id
 
-func GetPostAndCommentsById(db *sqlx.DB, id int) (Post, error) {
-	var post Post
+func GetPostAndCommentsById(db *sqlx.DB, id int) (*Post, error) {
+	post := new(Post)
 	var comments []Comment
 
 	// Query the current post
-	err := db.Get(&post, `
+	err := db.Get(post, `
 		SELECT
 			p.pid,
 			p.title,
@@ -140,7 +140,7 @@ func GetPostAndCommentsById(db *sqlx.DB, id int) (Post, error) {
 
 	if err != nil {
 		//TODO: log error
-		return post, err
+		return nil, err
 	}
 
 	// Query all comments on the post
@@ -162,7 +162,7 @@ func GetPostAndCommentsById(db *sqlx.DB, id int) (Post, error) {
 	`, id)
 
 	if err != nil {
-		return post, err
+		return nil, err
 	}
 
 	// Create an empty slice of the comments at the root of the tree. These are pointers since we're going to be updating the slices as we go
@@ -254,9 +254,9 @@ func UserExistsByUsername(db *sqlx.DB, username string) (bool, error) {
 }
 
 //TODO: shoudl this take teh raw password isntead so we can force it to hash it?
-func CreateNewUser(db *sqlx.DB, username, passwordHash string) (User, error) {
-	var newUser User
-	err := db.Get(&newUser, `
+func CreateNewUser(db *sqlx.DB, username, passwordHash string) (*User, error) {
+	newUser := new(User)
+	err := db.Get(newUser, `
 		WITH user_ins AS (
 			INSERT INTO users
 				(username)
@@ -277,14 +277,14 @@ func CreateNewUser(db *sqlx.DB, username, passwordHash string) (User, error) {
 	// Check if the user insert failed
 	if err != nil {
 		//TODO: log error
-		return User{}, err
+		return nil, err
 	}
 
 	return newUser, nil
 }
 
 //TODO: shoudl this take teh raw password isntead so we can force it to hash it?
-func VerifyUserPassword(db *sqlx.DB, username, password string) (User, error) {
+func VerifyUserPassword(db *sqlx.DB, username, password string) (*User, error) {
 	// Get the hash from the DB for this user
 	var passwordHash string
 	err := db.Get(&passwordHash, `
@@ -295,19 +295,19 @@ func VerifyUserPassword(db *sqlx.DB, username, password string) (User, error) {
 	`, username)
 
 	if err == sql.ErrNoRows { //TODO: different response for no match?
-		return User{}, err
+		return nil, err
 	} else if err != nil {
-		return User{}, err
+		return nil, err
 	}
 
 	// Verify password matches the stored password hash
 	match, err := argon2id.ComparePasswordAndHash(password, passwordHash)
 	if err != nil {
-		return User{}, err
+		return nil, err
 	}
 
 	if !match {
-		return User{}, errors.New("Password hash didn't match")
+		return nil, errors.New("Password hash didn't match")
 	}
 
 	// Now that we know the hashes match, query the user

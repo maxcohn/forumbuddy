@@ -9,7 +9,7 @@ import (
 )
 
 func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
-	var user models.User
+	var user *models.User
 
 	// Check if the route parameter is a string or an int
 	if uid, err := strconv.Atoi(chi.URLParam(r, "idOrUsername")); err != nil {
