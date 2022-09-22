@@ -71,7 +71,6 @@ func GetUserByUsername(db *sqlx.DB, username string) (*User, error) {
 	`, username)
 
 	if err != nil {
-		//TODO: should I be returning a pointer here so I can pass null
 		return nil, err
 	}
 
