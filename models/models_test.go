@@ -1,15 +1,13 @@
 package models_test
 
 import (
-	"forumbuddy/models"
-	"testing"
-
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
 var db *sqlx.DB
 
+/*TODO: insert sql manually for user lookup tests
 func TestMain(m *testing.M) {
 	// setup DB connection
 	db = sqlx.MustConnect("postgres", "user=postgres password=password host=127.0.0.1 sslmode=disable")
@@ -85,3 +83,4 @@ func TestGetUserById(t *testing.T) {
 
 //TODO: get comment by id - need more test data in sql
 //TODO: get post and comments - need more test data, will need to do a reflect.deepcopy
+*/

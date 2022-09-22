@@ -2,7 +2,7 @@ package routes
 
 import (
 	"database/sql"
-	"forumbuddy/models"
+	"forumbuddy/repos"
 	"forumbuddy/utils"
 	"net/http"
 	"strconv"
@@ -11,6 +11,9 @@ import (
 )
 
 func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request) {
+	commentRepo := repos.CommentRepositorySql{
+		DB: app.db,
+	}
 	// Auth is required on this route
 
 	// Parse the form and validate the values
@@ -49,7 +52,7 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 	curUser, _ := getUserIfLoggedIn(r, app.sessionStore)
 
 	// Insert the new comment into the DB
-	_, err = models.CreateNewComment(app.db, curUser.Uid, pid, parentCid, text)
+	_, err = commentRepo.CreateNewComment(curUser.Uid, pid, parentCid, text)
 
 	if err != nil {
 		app.render500Page(w)
@@ -60,6 +63,9 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) {
+	commentRepo := repos.CommentRepositorySql{
+		DB: app.db,
+	}
 	// Get the comment ID from the router param
 	commentId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || commentId <= 0 {
@@ -68,7 +74,7 @@ func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Get the comment from the DB
-	comment, err := models.GetCommentById(app.db, commentId)
+	comment, err := commentRepo.GetCommentById(commentId)
 	if err != nil {
 		app.render404Page(w)
 		return

@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"forumbuddy/models"
+	"forumbuddy/repos"
 	"forumbuddy/utils"
 	"net/http"
 	"strconv"
@@ -16,6 +16,10 @@ func (app *appState) newPostPageHandler(w http.ResponseWriter, r *http.Request) 
 
 // Render the 'post' page for the requested post
 func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
+	postRepo := repos.PostRepositorySql{
+		DB: app.db,
+	}
+
 	// Get the post id from the URL
 	postId, err := strconv.Atoi(chi.URLParam(r, "id"))
 
@@ -29,7 +33,7 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 	curUser, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
 
 	// Get the post and its comments from the database
-	post, err := models.GetPostAndCommentsById(app.db, postId)
+	post, err := postRepo.GetPostAndCommentsById(postId)
 
 	// If we couldn't get the post, it doesn't exist, so return a 404
 	if err != nil {
@@ -48,6 +52,9 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 // Create a new post based on the given parameters
 func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Auth is required for this route
+	postRepo := repos.PostRepositorySql{
+		DB: app.db,
+	}
 
 	// Parse the form and validate the values
 	r.ParseForm()
@@ -67,7 +74,7 @@ func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	curUser, _ := getUserIfLoggedIn(r, app.sessionStore)
 
 	// Create the new post in the database and get its id
-	newPostId, err := models.CreateNewPost(app.db, curUser.Uid, title, text)
+	newPostId, err := postRepo.CreateNewPost(curUser.Uid, title, text)
 
 	if err != nil {
 		app.render500Page(w)

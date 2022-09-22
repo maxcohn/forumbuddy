@@ -3,6 +3,7 @@ package routes
 import (
 	"encoding/gob"
 	"forumbuddy/models"
+	"forumbuddy/repos"
 	"html/template"
 	"log"
 	"net/http"
@@ -146,8 +147,11 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 }
 
 func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
+	postRepo := repos.PostRepositorySql{
+		DB: app.db,
+	}
 	// Get the 10 most recent posts
-	posts, err := models.GetRecentPosts(app.db, 10)
+	posts, err := postRepo.GetRecentPosts(10)
 
 	if err != nil {
 		http.Error(w, "Failed to get most recent posts", 400)

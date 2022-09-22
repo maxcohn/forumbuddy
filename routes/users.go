@@ -2,6 +2,7 @@ package routes
 
 import (
 	"forumbuddy/models"
+	"forumbuddy/repos"
 	"net/http"
 	"strconv"
 
@@ -10,13 +11,16 @@ import (
 
 func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
 	var user *models.User
+	userRepo := repos.UserRepositorySql{
+		DB: app.db,
+	}
 
 	// Check if the route parameter is a string or an int
 	if uid, err := strconv.Atoi(chi.URLParam(r, "idOrUsername")); err != nil {
 		// If it's a string, we query the user by their username
 		username := chi.URLParam(r, "idOrUsername")
 
-		user, err = models.GetUserByUsername(app.db, username)
+		user, err = userRepo.GetUserByUsername(username)
 
 		if err != nil {
 			app.render404Page(w)
@@ -24,7 +28,7 @@ func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// If it's an int, we query the user by their uid
-		user, err = models.GetUserById(app.db, uid)
+		user, err = userRepo.GetUserById(uid)
 
 		if err != nil {
 			app.render404Page(w)

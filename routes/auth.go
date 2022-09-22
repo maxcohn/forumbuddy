@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"forumbuddy/models"
+	"forumbuddy/repos"
 	"forumbuddy/utils"
 	"net/http"
 	"strings"
@@ -21,6 +21,11 @@ func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
+
+	userRepo := repos.UserRepositorySql{
+		DB: app.db,
+	}
+
 	r.ParseForm()
 
 	// Validate username and password from form
@@ -38,7 +43,7 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify the password matches the stored hash and the associated user back
-	user, err := models.VerifyUserPassword(app.db, username, password)
+	user, err := userRepo.VerifyUserPassword(username, password)
 	if err != nil {
 		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
 		return
@@ -108,6 +113,9 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
+	userRepo := repos.UserRepositorySql{
+		DB: app.db,
+	}
 
 	// Parse form for username and passwords
 	r.ParseForm()
@@ -136,13 +144,8 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the username exists already
-	userExists, err := models.UserExistsByUsername(app.db, username)
-	if err != nil {
-		app.render500Page(w)
-		return
-	}
-
-	if userExists {
+	_, err = userRepo.GetUserByUsername(username)
+	if err == nil {
 		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "A user with that username already exists"})
 		return
 	}
@@ -156,7 +159,7 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Store the new user in the database
-	newUser, err := models.CreateNewUser(app.db, username, passwordHash)
+	newUser, err := userRepo.CreateNewUser(username, passwordHash)
 	if err != nil {
 		app.render500Page(w)
 		return
