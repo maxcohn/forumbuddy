@@ -154,7 +154,7 @@ func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
 	posts, err := postRepo.GetRecentPosts(10)
 
 	if err != nil {
-		http.Error(w, "Failed to get most recent posts", 400)
+		http.Error(w, "Failed to get most recent posts", 500)
 		return
 	}
 
@@ -187,4 +187,40 @@ func (app *appState) rateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//TODO: implement rate limiting
 	})
+}
+
+//TODO: make middleware to handle different errors
+//TODO: switch to using app errors
+type AppError interface {
+	error
+	UserError() string
+	Render(http.ResponseWriter)
+}
+
+type NotFoundAppError struct{}
+
+func (err NotFoundAppError) UserError() string {
+	return ""
+}
+
+func (err NotFoundAppError) Render(w http.ResponseWriter) {
+	w.WriteHeader(404) //TODO: add template rendering
+}
+
+func (err NotFoundAppError) Error() string {
+	return ""
+}
+
+type InternalAppError struct{}
+
+func (err InternalAppError) UserError() string {
+	return ""
+}
+
+func (err InternalAppError) Render(w http.ResponseWriter) {
+	w.WriteHeader(500) //TODO: add template rendering
+}
+
+func (err InternalAppError) Error() string {
+	return ""
 }

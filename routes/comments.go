@@ -21,7 +21,7 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 
 	// Validate the form values
 	// Make sure the text parameter is present and not empty
-	text, err := utils.FormValueStringNonEmpty(r.Form, "text")
+	text, err := utils.FormValueStringNonEmpty(r.Form, "text") //TODO: convert to using the payload
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return

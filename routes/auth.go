@@ -3,8 +3,8 @@ package routes
 import (
 	"forumbuddy/repos"
 	"forumbuddy/utils"
+	"log"
 	"net/http"
-	"strings"
 
 	"github.com/alexedwards/argon2id"
 )
@@ -20,6 +20,11 @@ func (app *appState) loginPageHandler(w http.ResponseWriter, r *http.Request) {
 	app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{})
 }
 
+type LoginPayload struct {
+	Username string `validate:"required" form:"username"`
+	Password string `validate:"required" form:"password"`
+}
+
 func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	userRepo := repos.UserRepositorySql{
@@ -28,22 +33,15 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	// Validate username and password from form
-	username, err := utils.FormValueStringNonEmpty(r.Form, "username")
+	var loginPayload LoginPayload
+	err := utils.DecodeAndValidateForm(&loginPayload, r.Form)
 	if err != nil {
-		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
-		return
-	}
-	username = strings.TrimSpace(username)
-
-	password, err := utils.FormValueStringNonEmpty(r.Form, "password")
-	if err != nil {
-		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
+		log.Printf("failed to decode and validate: %s", err.Error())
 		return
 	}
 
 	// Verify the password matches the stored hash and the associated user back
-	user, err := userRepo.VerifyUserPassword(username, password)
+	user, err := userRepo.VerifyUserPassword(loginPayload.Username, loginPayload.Password)
 	if err != nil {
 		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
 		return
@@ -105,6 +103,12 @@ func (app *appState) signupPageHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type CreateUserPayload struct {
+	Username        string `validate:"required" form:"username"`
+	Password        string `validate:"required" form:"password"`
+	ConfirmPassword string `validate:"required" form:"confirmpassword"`
+}
+
 //TODO: change name to signupHandler?
 func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if the user is logged in. If they are, ignore this and redirect them to the homepage
@@ -117,41 +121,30 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		DB: app.db,
 	}
 
-	// Parse form for username and passwords
 	r.ParseForm()
-	username, err := utils.FormValueStringNonEmpty(r.Form, "username")
-	if err != nil {
-		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid username"})
-		return
-	}
 
-	password, err := utils.FormValueStringNonEmpty(r.Form, "password")
+	var createUserPayload CreateUserPayload
+	err := utils.DecodeAndValidateForm(&createUserPayload, r.Form)
 	if err != nil {
-		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid password or passwords do not match"})
-		return
-	}
-
-	confirmPassword, err := utils.FormValueStringNonEmpty(r.Form, "confirmpassword")
-	if err != nil {
-		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid password or passwords do not match"})
+		log.Printf("failed to decode and validate: %s", err.Error())
 		return
 	}
 
 	// Check if both of their passwords match
-	if password != confirmPassword {
+	if createUserPayload.Password != createUserPayload.ConfirmPassword {
 		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "Invalid password or passwords do not match"})
 		return
 	}
 
 	// Check if the username exists already
-	_, err = userRepo.GetUserByUsername(username)
+	_, err = userRepo.GetUserByUsername(createUserPayload.Username)
 	if err == nil {
 		app.templates.ExecuteTemplate(w, "signup.tmpl", map[string]interface{}{"Error": "A user with that username already exists"})
 		return
 	}
 
 	// Hash the password
-	passwordHash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
+	passwordHash, err := argon2id.CreateHash(createUserPayload.Password, argon2id.DefaultParams)
 	if err != nil {
 		//TODO: Log this error because I don't think the password hash should fail
 		app.render500Page(w)
@@ -159,7 +152,7 @@ func (app *appState) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Store the new user in the database
-	newUser, err := userRepo.CreateNewUser(username, passwordHash)
+	newUser, err := userRepo.CreateNewUser(createUserPayload.Username, passwordHash)
 	if err != nil {
 		app.render500Page(w)
 		return

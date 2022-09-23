@@ -3,6 +3,7 @@ package routes
 import (
 	"forumbuddy/repos"
 	"forumbuddy/utils"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -49,6 +50,11 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type CreatePostPayload struct {
+	Title string `validate:"required" form:"title"`
+	Text  string `validate:"required" form:"text"`
+}
+
 // Create a new post based on the given parameters
 func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Auth is required for this route
@@ -59,22 +65,18 @@ func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the form and validate the values
 	r.ParseForm()
 
-	// Get the values from the form and validate that they are non-empty strings
-	title, err := utils.FormValueStringNonEmpty(r.Form, "title")
+	var createPostPayload CreatePostPayload
+	err := utils.DecodeAndValidateForm(&createPostPayload, r.Form)
 	if err != nil {
-		http.Error(w, err.Error(), 400)
-	}
-
-	text, err := utils.FormValueStringNonEmpty(r.Form, "text")
-	if err != nil {
-		http.Error(w, err.Error(), 400)
+		log.Printf("failed to decode and validate: %s", err.Error())
+		return
 	}
 
 	// Get the current user (we already verified they're logged in via middleware)
 	curUser, _ := getUserIfLoggedIn(r, app.sessionStore)
 
 	// Create the new post in the database and get its id
-	newPostId, err := postRepo.CreateNewPost(curUser.Uid, title, text)
+	newPostId, err := postRepo.CreateNewPost(curUser.Uid, createPostPayload.Title, createPostPayload.Text)
 
 	if err != nil {
 		app.render500Page(w)

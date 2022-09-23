@@ -3,9 +3,13 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/go-playground/form/v4"
+	"github.com/go-playground/validator/v10"
 )
 
 // Checks the given url.Values for the given param and validates that it is an
@@ -29,4 +33,24 @@ func FormValueStringNonEmpty(urlValues url.Values, param string) (string, error)
 	}
 
 	return urlValues.Get(param), nil
+}
+
+var validate = validator.New()
+var formDecoder = form.NewDecoder()
+
+//TODO: test
+func DecodeAndValidateForm(value any, formData url.Values) error {
+	err := formDecoder.Decode(value, formData)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Value: %v\n", value)
+
+	err = validate.Struct(value)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

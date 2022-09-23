@@ -1,0 +1,8 @@
+
+
+
+Maybe make a service layer
+    This will probably contain the payload models
+
+
+Make a template package that will store template rendering code and also contain the structs that the templates use
