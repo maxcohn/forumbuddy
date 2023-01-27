@@ -1,7 +1,6 @@
 package repos
 
 import (
-	"fmt"
 	"forumbuddy/models"
 
 	"github.com/jmoiron/sqlx"
@@ -33,7 +32,6 @@ func (repo *PostRepositorySql) GetPostAndCommentsById(id int) (*models.Post, err
 	`, id)
 
 	if err != nil {
-		//TODO: log error
 		return nil, err
 	}
 
@@ -101,8 +99,6 @@ func (repo *PostRepositorySql) CreateNewPost(uid int, title, body string) (int, 
 	`, uid, title, body)
 
 	if err != nil {
-		fmt.Println(err.Error())
-		//TODO: log this?
 		return 0, err
 	}
 
@@ -124,8 +120,6 @@ func (repo *PostRepositorySql) GetRecentPosts(limit int) ([]models.Post, error) 
 	`, limit)
 
 	if err != nil {
-		fmt.Println(err.Error())
-		//TODO: add logging
 		return nil, err
 	}
 

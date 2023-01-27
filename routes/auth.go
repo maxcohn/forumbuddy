@@ -25,7 +25,7 @@ type LoginPayload struct {
 	Password string `validate:"required" form:"password"`
 }
 
-func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
+func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) AppError {
 
 	userRepo := repos.UserRepositorySql{
 		DB: app.db,
@@ -37,34 +37,34 @@ func (app *appState) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	err := utils.DecodeAndValidateForm(&loginPayload, r.Form)
 	if err != nil {
 		log.Printf("failed to decode and validate: %s", err.Error())
-		return
+		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
+		return NotFoundAppError{} //TODO: change to generic error?
 	}
 
 	// Verify the password matches the stored hash and the associated user back
 	user, err := userRepo.VerifyUserPassword(loginPayload.Username, loginPayload.Password)
 	if err != nil {
 		app.templates.ExecuteTemplate(w, "login.tmpl", map[string]interface{}{"Error": "Invalid username or password"})
-		return
+		return NotFoundAppError{} //TODO: change to generic error?//TODO: or redirect with a query parameter for the page to render the error message
 	}
 
 	// Read the session
 	sess, err := app.sessionStore.Get(r, "session")
 	if err != nil {
-		app.render500Page(w)
-		return
+		return InternalAppError{}
 	}
 
 	sess.Values["user"] = user
 
 	err = sess.Save(r, w)
 	if err != nil {
-		app.render500Page(w)
-		return
+		return InternalAppError{}
 	}
 
 	// Redirect to home page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 
+	return nil
 }
 
 func (app *appState) logoutUserHandler(w http.ResponseWriter, r *http.Request) {

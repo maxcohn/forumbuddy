@@ -125,20 +125,20 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 		r.Use(app.requireLoggedInMiddleware)
 		r.Get("/", app.newPostPageHandler)
 	})*/
-	router.Get("/", app.indexHandler)
+	router.Get("/", AppHandler(app.indexHandler).ServeHTTP)
 	router.Get("/newpost", app.requireLoggedInMiddleware(http.HandlerFunc(app.newPostPageHandler)).ServeHTTP)
-	router.Get("/post/{id:[0-9]+}", app.postPageHandler)
+	router.Get("/post/{id:[0-9]+}", AppHandler(app.postPageHandler).ServeHTTP)
 	router.Get("/comment/{id:[0-9]+}", app.commentPageHandler)
 	router.Get("/user/{idOrUsername}", app.userPageHandler)
 
 	// Creation routes
-	router.Post("/post", app.requireLoggedInMiddleware(http.HandlerFunc(app.createPostHandler)).ServeHTTP)       //TODO: require loggedin
+	router.Post("/post", app.requireLoggedInMiddleware(AppHandler(app.createPostHandler)).ServeHTTP)             //TODO: require loggedin
 	router.Post("/comment", app.requireLoggedInMiddleware(http.HandlerFunc(app.createCommentHandler)).ServeHTTP) //TODO: require loggedin
 	//TODO: route for user signup
 
 	// Authentication related routes
 	router.Get("/login", app.loginPageHandler)
-	router.Post("/login", app.loginUserHandler)
+	router.Post("/login", AppHandler(app.loginUserHandler).ServeHTTP)
 	router.Get("/logout", app.requireLoggedInMiddleware(http.HandlerFunc(app.logoutUserHandler)).ServeHTTP)
 	router.Get("/signup", app.signupPageHandler)
 	router.Post("/signup", app.createUserHandler) //TODO: change name?
@@ -146,7 +146,7 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 	return router
 }
 
-func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
+func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) AppError {
 	postRepo := repos.PostRepositorySql{
 		DB: app.db,
 	}
@@ -154,8 +154,7 @@ func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
 	posts, err := postRepo.GetRecentPosts(10)
 
 	if err != nil {
-		http.Error(w, "Failed to get most recent posts", 500)
-		return
+		return InternalAppError{}
 	}
 
 	// Check if the user is logged in to show login status
@@ -171,6 +170,7 @@ func (app *appState) indexHandler(w http.ResponseWriter, r *http.Request) {
 		"IsLoggedIn":  isLoggedIn,
 		"CurrentUser": curUser,
 	})
+	return nil
 }
 
 func (app *appState) render500Page(w http.ResponseWriter) {
@@ -183,10 +183,44 @@ func (app *appState) render404Page(w http.ResponseWriter) {
 	app.templates.ExecuteTemplate(w, "404.tmpl", nil)
 }
 
+/*
 func (app *appState) rateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//TODO: implement rate limiting
 	})
+}*/
+
+//type AppHandler func(http.Handler) AppError
+type AppHandler func(http.ResponseWriter, *http.Request) AppError
+
+func (handler AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	appErr := handler(w, r)
+
+	if appErr == nil {
+		return
+	}
+
+	appErr.Render(w)
+
+	// Check error type
+	/*
+		switch appErr.(type) {
+		case NotFoundAppError:
+			return
+		case InternalAppError:
+			return
+		default:
+			//TODO: unknown error
+		}*/
+
+	/*
+		func (fn RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+			err := fn(w, r)
+			if err != nil {
+				// Check error code and handle differently
+			}
+		}
+	*/
 }
 
 //TODO: make middleware to handle different errors
@@ -197,6 +231,8 @@ type AppError interface {
 	Render(http.ResponseWriter)
 }
 
+//TODO: general error?
+
 type NotFoundAppError struct{}
 
 func (err NotFoundAppError) UserError() string {
@@ -205,6 +241,7 @@ func (err NotFoundAppError) UserError() string {
 
 func (err NotFoundAppError) Render(w http.ResponseWriter) {
 	w.WriteHeader(404) //TODO: add template rendering
+	w.Write([]byte("oi bruv, no page"))
 }
 
 func (err NotFoundAppError) Error() string {

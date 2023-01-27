@@ -16,7 +16,7 @@ func (app *appState) newPostPageHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // Render the 'post' page for the requested post
-func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
+func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) AppError {
 	postRepo := repos.PostRepositorySql{
 		DB: app.db,
 	}
@@ -25,9 +25,8 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 	postId, err := strconv.Atoi(chi.URLParam(r, "id"))
 
 	// If the post id wasn't specified or is invalid, return a 404
-	if err != nil { //TODO: make a wrapper for this that takes a string for a context message
-		app.render404Page(w)
-		return
+	if err != nil {
+		return NotFoundAppError{}
 	}
 
 	// Check if the user is logged in to show login status
@@ -38,8 +37,8 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// If we couldn't get the post, it doesn't exist, so return a 404
 	if err != nil {
-		app.render404Page(w)
-		return
+		//app.render404Page(w)
+		return NotFoundAppError{}
 	}
 
 	// Render the 'post' page
@@ -48,6 +47,8 @@ func (app *appState) postPageHandler(w http.ResponseWriter, r *http.Request) {
 		"IsLoggedIn":  isLoggedIn,
 		"CurrentUser": curUser,
 	})
+
+	return nil
 }
 
 type CreatePostPayload struct {
@@ -56,7 +57,7 @@ type CreatePostPayload struct {
 }
 
 // Create a new post based on the given parameters
-func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
+func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) AppError {
 	// Auth is required for this route
 	postRepo := repos.PostRepositorySql{
 		DB: app.db,
@@ -69,7 +70,7 @@ func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	err := utils.DecodeAndValidateForm(&createPostPayload, r.Form)
 	if err != nil {
 		log.Printf("failed to decode and validate: %s", err.Error())
-		return
+		return InternalAppError{} //TODO: return validation error or generic 400
 	}
 
 	// Get the current user (we already verified they're logged in via middleware)
@@ -79,9 +80,10 @@ func (app *appState) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	newPostId, err := postRepo.CreateNewPost(curUser.Uid, createPostPayload.Title, createPostPayload.Text)
 
 	if err != nil {
-		app.render500Page(w)
-		return
+		return InternalAppError{}
 	}
 
 	http.Redirect(w, r, "/post/"+strconv.Itoa(newPostId), http.StatusSeeOther)
+
+	return nil
 }

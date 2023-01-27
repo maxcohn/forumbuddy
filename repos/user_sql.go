@@ -35,7 +35,6 @@ func (repo *UserRepositorySql) CreateNewUser(username, passwordHash string) (*mo
 
 	// Check if the user insert failed
 	if err != nil {
-		//TODO: log error
 		return nil, err
 	}
 
