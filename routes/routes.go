@@ -128,8 +128,8 @@ func NewRouter(db *sqlx.DB, templates *template.Template, sessionStore sessions.
 	router.Get("/", AppHandler(app.indexHandler).ServeHTTP)
 	router.Get("/newpost", app.requireLoggedInMiddleware(http.HandlerFunc(app.newPostPageHandler)).ServeHTTP)
 	router.Get("/post/{id:[0-9]+}", AppHandler(app.postPageHandler).ServeHTTP)
-	router.Get("/comment/{id:[0-9]+}", app.commentPageHandler)
-	router.Get("/user/{idOrUsername}", app.userPageHandler)
+	router.Get("/comment/{id:[0-9]+}", AppHandler(app.commentPageHandler).ServeHTTP)
+	router.Get("/user/{idOrUsername}", AppHandler(app.userPageHandler).ServeHTTP)
 
 	// Creation routes
 	router.Post("/post", app.requireLoggedInMiddleware(AppHandler(app.createPostHandler)).ServeHTTP)             //TODO: require loggedin
@@ -201,26 +201,6 @@ func (handler AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	appErr.Render(w)
-
-	// Check error type
-	/*
-		switch appErr.(type) {
-		case NotFoundAppError:
-			return
-		case InternalAppError:
-			return
-		default:
-			//TODO: unknown error
-		}*/
-
-	/*
-		func (fn RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-			err := fn(w, r)
-			if err != nil {
-				// Check error code and handle differently
-			}
-		}
-	*/
 }
 
 //TODO: make middleware to handle different errors

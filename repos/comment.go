@@ -1,12 +1,11 @@
 package repos
 
 import (
+	"database/sql"
 	"forumbuddy/models"
 )
 
 type CommentRepository interface {
-	GetUserById(id int) (*models.User, error)
-	GetUserByUsername(username string) (*models.User, error)
-	CreateUser(username, passwordHash string) (*models.User, error)
-	VerifyUser(username, password string) (*models.User, error)
+	GetCommentById(id int) (*models.Comment, error)
+	CreateNewComment(uid, pid int, parent sql.NullInt64, body string) (int, error)
 }

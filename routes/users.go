@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
+func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) AppError {
 	var user *models.User
 	userRepo := repos.UserRepositorySql{
 		DB: app.db,
@@ -23,18 +23,17 @@ func (app *appState) userPageHandler(w http.ResponseWriter, r *http.Request) {
 		user, err = userRepo.GetUserByUsername(username)
 
 		if err != nil {
-			app.render404Page(w)
-			return
+			return NotFoundAppError{}
 		}
 	} else {
 		// If it's an int, we query the user by their uid
 		user, err = userRepo.GetUserById(uid)
 
 		if err != nil {
-			app.render404Page(w)
-			return
+			return NotFoundAppError{}
 		}
 	}
 
 	app.templates.ExecuteTemplate(w, "user.tmpl", user)
+	return nil
 }

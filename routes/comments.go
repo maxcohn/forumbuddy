@@ -62,22 +62,20 @@ func (app *appState) createCommentHandler(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, "/post/"+strconv.Itoa(pid), http.StatusSeeOther)
 }
 
-func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) {
+func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) AppError {
 	commentRepo := repos.CommentRepositorySql{
 		DB: app.db,
 	}
 	// Get the comment ID from the router param
 	commentId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || commentId <= 0 {
-		app.render404Page(w)
-		return
+		return NotFoundAppError{}
 	}
 
 	// Get the comment from the DB
 	comment, err := commentRepo.GetCommentById(commentId)
 	if err != nil {
-		app.render404Page(w)
-		return
+		return NotFoundAppError{}
 	}
 
 	curUser, isLoggedIn := getUserIfLoggedIn(r, app.sessionStore)
@@ -87,4 +85,6 @@ func (app *appState) commentPageHandler(w http.ResponseWriter, r *http.Request) 
 		"IsLoggedIn":  isLoggedIn,
 		"CurrentUser": curUser,
 	})
+
+	return nil
 }

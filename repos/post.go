@@ -5,8 +5,7 @@ import (
 )
 
 type PostRepository interface {
-	GetUserById(id int) (*models.User, error)
-	GetUserByUsername(username string) (*models.User, error)
-	CreateUser(username, passwordHash string) (*models.User, error)
-	VerifyUser(username, password string) (*models.User, error)
+	GetPostAndCommentsById(id int) (*models.Post, error)
+	CreateNewPost(uid int, title, body string) (int, error)
+	GetRecentPosts(limit int) ([]models.Post, error)
 }
